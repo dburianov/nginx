@@ -22,7 +22,7 @@ publish_develop:
     services:
         - docker:dind
     script:
-        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-        - docker build -t $IMAGE_LATEST -t $IMAGE_COMMIT -f Dockerfile ./
+#        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+        - sudo docker build -t $IMAGE_LATEST -t $IMAGE_COMMIT -f Dockerfile ./
 #        - docker push $IMAGE_LATEST
 #        - docker push $IMAGE_COMMIT
