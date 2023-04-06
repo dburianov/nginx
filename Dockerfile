@@ -211,6 +211,7 @@ RUN mkdir -p /usr/local/nginx/logs /usr/local/nginx/conf/ssl/ \
 COPY --from=ubuntu-build /usr/local /usr/local/
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 ADD ssl_common.conf.inc /usr/local/nginx/conf/ssl/
+ADD modsecurity /usr/local/modsecurity
 #COPY dhparams4096.pem /usr/local/nginx/conf/ssl/
 #RUN openssl rand 80 > /usr/local/nginx/conf/ssl/ticket.key
 RUN ldconfig /usr/local/nginx/lib/

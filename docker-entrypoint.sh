@@ -194,6 +194,7 @@ env | sort
 /usr/local/nginx/sbin/nginx -V
 /usr/local/nginx/sbin/nginx -t
 
+# generate ticket.key
 openssl rand 80 > /usr/local/nginx/conf/ssl/ticket.key
 
 exec "$@"
