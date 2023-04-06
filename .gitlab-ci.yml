@@ -4,8 +4,8 @@ stages:
 - docker
 
 variables:
-    IMAGE_LATEST: $CI_REGISTRY_IMAGE/nginx-aio:latest
-    IMAGE_COMMIT: $CI_REGISTRY_IMAGE/nginx-aio:$CI_COMMIT_SHORT_SHA
+    IMAGE_LATEST: dburianov/nginx-aio:latest
+    IMAGE_COMMIT: dburianov/nginx-aio:$CI_COMMIT_SHORT_SHA
     CI: 'false'
 
 sast:
