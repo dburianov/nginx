@@ -98,8 +98,6 @@ RUN echo \
     && make -j$(nproc) \
     && make install \
     && mkdir /usr/local/modsecurity/conf \
-    && cp /usr/src/ModSecurity/unicode.mapping /usr/local/modsecurity/conf/unicode.mapping \
-    && cp /usr/src/ModSecurity/modsecurity.conf-recommended /usr/local/modsecurity/conf/modsecurity.conf \
     && ls -la \
     && cd /usr/src
 
@@ -192,8 +190,7 @@ RUN echo "Compiling Nginx" \
     && cp -rf /usr/src/lua-resty-lrucache/lib/* /usr/local/share/lua/5.1/ \
     && wget https://github.com/marrotte/nginx-sts-exporter/releases/download/v0.0-port/nginx-vts-exporter.tar.gz -O /usr/src/nginx-vts-exporter.tar.gz \
     && cd /usr/src && tar xzfv /usr/src/nginx-vts-exporter.tar.gz \
-    && cp -rf /usr/src/nginx-vts-exporter /usr/local/nginx/sbin/nginx-vts-exporter \
-    && rm -rf /usr/src/* 
+    && cp -rf /usr/src/nginx-vts-exporter /usr/local/nginx/sbin/nginx-vts-exporter
 
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/nginx/sbin/
 RUN mkdir -p /usr/local/nginx/lib/ \
@@ -209,16 +206,20 @@ RUN mkdir -p /usr/local/nginx/logs /usr/local/nginx/conf/ssl/ \
     && ln -sf /dev/stderr /usr/local/nginx/logs/error.log 
 
 COPY --from=ubuntu-build /usr/local /usr/local/
+COPY --from=ubuntu-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecurity/unicode.mapping
+#COPY --from=ubuntu-build /usr/src/ModSecurity/modsecurity.conf-recommended /usr/local/modsecurity/conf/modsecurity.conf
+
 ADD docker-entrypoint.sh /docker-entrypoint.sh
-ADD ssl_common.conf.inc /usr/local/nginx/conf/ssl/
+ADD conf.d /usr/local/nginx/conf
 ADD modsecurity /usr/local/modsecurity
+RUN ls -la /usr/local/modsecurity/
+RUN mkdir -p /tmp/modsecurity/tmp; \
+    mkdir -p /tmp/modsecurity/data; \
+    mkdir -p /tmp/modsecurity/upload
 #COPY dhparams4096.pem /usr/local/nginx/conf/ssl/
 #RUN openssl rand 80 > /usr/local/nginx/conf/ssl/ticket.key
 RUN ldconfig /usr/local/nginx/lib/
 RUN PATH=$PATH:/usr/local/nginx/sbin
-#RUN sed 's/SecRuleEngine DetectionOnly/SecRuleEngine On/g' -i /usr/local/modsecurity/conf/modsecurity.conf
-#RUN echo 'SecDebugLog /dev/stdout' >> /usr/local/modsecurity/conf/modsecurity.conf
-#RUN sed 's/SecAuditLog \/var\/log\/modsec_audit.log/SecAuditLog \/dev\/stdout/g' -i /usr/local/modsecurity/conf/modsecurity.conf
 EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
 
 #VOLUME ["/usr/local/nginx/conf", "/usr/local/nginx/html", "/usr/local/nginx/lua", "/usr/local/nginx/logs", "/usr/local/nginx/cache"]
