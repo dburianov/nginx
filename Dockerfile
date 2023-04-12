@@ -232,6 +232,11 @@ RUN mkdir -p /usr/local/nginx/lib/ \
     && ldd /usr/local/nginx/sbin/nginx |  cut -d ' ' -f 3 | grep '/' | xargs -i cp {} /usr/local/nginx/lib/ \
     && export HUNTER_INSTALL_DIR=$(cat /usr/src/jaeger-client-cpp/.build/_3rdParty/Hunter/install-root-dir) \
     && cp -p ${HUNTER_INSTALL_DIR}/lib/libyaml-cpp.so* /usr/local/lib \
+    && strip \
+        /usr/local/lib/libopentracing.so* \
+        /usr/local/lib/libyaml-cpp.so* \
+        /usr/local/lib/libjaegertracing.so* \
+        /usr/local/nginx/lib/*.so* \
     && rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
 
 FROM ubuntu_core AS nginx-release
