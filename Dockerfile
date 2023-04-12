@@ -74,6 +74,7 @@ RUN git clone https://github.com/openresty/luajit2.git /usr/src/luajit-2.0 \
     && git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/src/ModSecurity-nginx \
     && git clone https://github.com/opentracing/opentracing-cpp.git /usr/src/opentracing-cpp \
     && git clone https://github.com/opentracing-contrib/nginx-opentracing.git /usr/src/nginx-opentracing \
+    && git clone --depth=1 --single-branch -b v0.9.0 https://github.com/jaegertracing/jaeger-client-cpp.git /usr/src/jaeger-client-cpp\
     && git clone https://github.com/google/ngx_brotli /usr/src/ngx_brotli \
     && git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl \
     && git clone https://github.com/openresty/set-misc-nginx-module.git /usr/src/set-misc-nginx-module \
@@ -108,11 +109,34 @@ RUN echo "Building boringssl ..." \
     && cd build \
     && cmake -GNinja .. \
     && ninja
-#
 
-#    && echo "Apply nginx_upstream_check_module patch proxy_connect" \
-#    && patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect.patch \
+#    && echo "Apply nngx_http_proxy_connect_module patch" \
+#    && patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch \
 #    --add-module=/usr/src/ngx_http_proxy_connect_module \
+    # Jaeger
+RUN mkdir -p /usr/src/opentracing-cpp/.build \
+    && cd /usr/src/opentracing-cpp/.build \
+    && cmake \
+            -DBUILD_MOCKTRACER=OFF \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DBUILD_TESTING=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            .. \
+    && make \
+    && make install
+RUN mkdir -p /usr/src/jaeger-client-cpp/.build \
+    && cd /usr/src/jaeger-client-cpp/.build \
+    && cmake \
+            -DBUILD_TESTING=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DHUNTER_CONFIGURATION_TYPES=Release \
+            -DJAEGERTRACING_BUILD_EXAMPLES=OFF \
+            -DJAEGERTRACING_COVERAGE=OFF \
+            -DJAEGERTRACING_WARNINGS_AS_ERRORS=OFF \
+            -DJAEGERTRACING_WITH_YAML_CPP=ON \
+            .. \
+    && make \
+    && make install
 
 RUN echo "Compiling Nginx" \
     && cd /usr/src/ \
@@ -123,11 +147,14 @@ RUN echo "Compiling Nginx" \
     && git submodule update --init \
     && cd /usr/src/nginx \
     && echo "Apply nginx_upstream_check_module patch check" \
-    && patch -p1 < /usr/src/nginx_upstream_check_module/check_1.16.1+.patch \
+    && patch -p1 < /usr/src/nginx_upstream_check_module/check_1.20.1+.patch \
+    && echo "Apply nngx_http_proxy_connect_module patch" \
+    && patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch \
     && export ASAN_OPTIONS=detect_leaks=0  \
     && export CFLAGS="-Wno-error" \
     && export LUAJIT_LIB=/usr/local/lib \
     && export LUAJIT_INC=/usr/local/include/luajit-2.1 \
+    && export HUNTER_INSTALL_DIR=$(cat /usr/src/jaeger-client-cpp/.build/_3rdParty/Hunter/install-root-dir) \
     && ldconfig \
     && cp ./auto/configure . \
     && ./configure \
@@ -179,10 +206,11 @@ RUN echo "Compiling Nginx" \
     --add-module=/usr/src/status-nginx-module \
     --add-module=/usr/src/ngx_brotli \
     --add-module=/usr/src/set-misc-nginx-module \
+    --add-module=/usr/src/ngx_http_proxy_connect_module \
     --with-http_v3_module \
     --with-stream_quic_module \
-    --with-cc-opt="-I/usr/src/boringssl/include" \
-    --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
+    --with-cc-opt="-I/usr/src/boringssl/include -I${HUNTER_INSTALL_DIR}/include" \
+    --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto -L${HUNTER_INSTALL_DIR}/lib" \
     --build=quic-boringssl \
     && make -j$(nproc) \
     && make install \
@@ -192,15 +220,28 @@ RUN echo "Compiling Nginx" \
     && cd /usr/src && tar xzfv /usr/src/nginx-vts-exporter.tar.gz \
     && cp -rf /usr/src/nginx-vts-exporter /usr/local/nginx/sbin/nginx-vts-exporter
 
+    # njs scripting language
+RUN cd /usr/src/njs \
+    && ./configure --cc-opt="-O2 -m64 -march=x86-64 -mfpmath=sse -msse4.2 -pipe -fPIC -fomit-frame-pointer" \
+    && make \
+    && make unit_test \
+    && install -m755 build/njs /usr/local/bin/
+
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/nginx/sbin/
 RUN mkdir -p /usr/local/nginx/lib/ \
-    && ldd /usr/local/nginx/sbin/nginx |  cut -d ' ' -f 3 | grep '/' | xargs -i cp {} /usr/local/nginx/lib/
-
+    && ldd /usr/local/nginx/sbin/nginx |  cut -d ' ' -f 3 | grep '/' | xargs -i cp {} /usr/local/nginx/lib/ \
+    && export HUNTER_INSTALL_DIR=$(cat /usr/src/jaeger-client-cpp/.build/_3rdParty/Hunter/install-root-dir) \
+    && cp -p ${HUNTER_INSTALL_DIR}/lib/libyaml-cpp.so* /usr/local/lib \
+    && rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
 
 FROM ubuntu_core AS nginx-release
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 
-RUN mkdir -p /usr/local/nginx/logs /usr/local/nginx/conf/ssl/ \
+RUN mkdir -p /usr/local/nginx/logs \
+            /usr/local/nginx/conf/ssl/ \
+            /tmp/modsecurity/tmp \
+            /tmp/modsecurity/data \
+            /tmp/modsecurity/upload \
     && touch /usr/local/nginx/logs/access.log /usr/local/nginx/logs/error.log \
     && ln -sf /dev/stdout /usr/local/nginx/logs/access.log \
     && ln -sf /dev/stderr /usr/local/nginx/logs/error.log 
@@ -209,29 +250,25 @@ COPY --from=ubuntu-build /usr/local /usr/local/
 COPY --from=ubuntu-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecurity/unicode.mapping
 #COPY --from=ubuntu-build /usr/src/ModSecurity/modsecurity.conf-recommended /usr/local/modsecurity/conf/modsecurity.conf
 
+ARG CACHEBUST=0
 ADD docker-entrypoint.sh /docker-entrypoint.sh
-ADD conf.d /usr/local/nginx/conf
+ADD conf /usr/local/nginx/conf
 ADD modsecurity /usr/local/modsecurity
-RUN ls -la /usr/local/modsecurity/
-RUN mkdir -p /tmp/modsecurity/tmp; \
-    mkdir -p /tmp/modsecurity/data; \
-    mkdir -p /tmp/modsecurity/upload
+
 #COPY dhparams4096.pem /usr/local/nginx/conf/ssl/
-#RUN openssl rand 80 > /usr/local/nginx/conf/ssl/ticket.key
 RUN ldconfig /usr/local/nginx/lib/
-RUN PATH=$PATH:/usr/local/nginx/sbin
+
 EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
 
 #VOLUME ["/usr/local/nginx/conf", "/usr/local/nginx/html", "/usr/local/nginx/lua", "/usr/local/nginx/logs", "/usr/local/nginx/cache"]
 
 STOPSIGNAL SIGQUIT
 
-# njs version
-#RUN njs -v
-
 # test the configuration
-RUN env | sort \
-    && /usr/local/nginx/sbin/nginx -V \
-    && /usr/local/nginx/sbin/nginx -t
+#RUN env | sort \
+#    && echo -n "njs version is: " \
+#    && njs -v \
+#    && /usr/local/nginx/sbin/nginx -V \
+#    && /usr/local/nginx/sbin/nginx -t
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/local/nginx/sbin/nginx", "-g", "daemon off;"]

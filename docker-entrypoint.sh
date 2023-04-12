@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export DNS_RESOLVERS="$(cat /etc/resolv.conf | grep nameserver | cut -d' ' -f2 | xargs)"
-NGINX_INC_FOLDER='/usr/local/nginx/conf/conf.d.http'
+NGINX_INC_FOLDER='/usr/local/nginx/conf/conf.d.inc'
 mkdir -p $NGINX_INC_FOLDER
 echo "resolver ${DNS_RESOLVERS} valid=30s;" | tee $NGINX_INC_FOLDER/resolver.conf.inc
 
@@ -189,8 +189,12 @@ ncpu=$( printf "%s\n%s\n%s\n%s\n%s\n" \
 
 echo "worker_processes $ncpu;" | tee $NGINX_INC_FOLDER/worker_processes.conf.inc
 
+echo "PATH=$PATH:/usr/local/nginx/sbin" >> ~/.bashrc
+
 # test env
 env | sort
+echo -n "njs version is: "
+/usr/local/bin/njs -v
 /usr/local/nginx/sbin/nginx -V
 /usr/local/nginx/sbin/nginx -t
 
