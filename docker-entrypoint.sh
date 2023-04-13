@@ -4,14 +4,14 @@ export DNS_RESOLVERS="$(cat /etc/resolv.conf | grep nameserver | cut -d' ' -f2 |
 NGINX_INC_FOLDER='/usr/local/nginx/conf/conf.d.inc'
 mkdir -p $NGINX_INC_FOLDER
 echo "resolver ${DNS_RESOLVERS} valid=30s;" | tee $NGINX_INC_FOLDER/resolver.conf.inc
+echo "resolver_timeout 5s;" | tee -a $NGINX_INC_FOLDER/resolver.conf.inc
 
 LC_ALL=C
 ME=$( basename "$0" )
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-#[ "${NGINX_ENTRYPOINT_WORKER_PROCESSES_AUTOTUNE:-}" ] || exit 0
 
-#touch /etc/nginx/nginx.conf 2>/dev/null || { echo >&2 "$ME: error: can not modify /etc/nginx/nginx.conf (read-only file system?)"; exit 0; }
+touch /usr/local/nginx/conf/entrypoint.test 2>/dev/null || { echo >&2 "$ME: error: can not modify /usr/local/nginx/conf/entrypoint.test (read-only file system?)"; exit 0; }
 
 ceildiv() {
   num=$1
