@@ -1,0 +1,19 @@
+# Blocking specific countries
+SecGeoLookupDb /usr/local/nginx/conf.docker/GeoIP.dat
+#SecAction \
+# "id:900600,\
+#  phase:1,\
+#  nolog,\
+#  pass,\
+#  t:none,\
+#  setvar:'tx.high_risk_country_codes='"
+
+SecRule REMOTE_ADDR "@geoLookup" "chain,id:22,drop,msg:'Non-GB IP address'"
+SecRule GEO:COUNTRY_CODE "!@streq GB"
+
+# SecRule REMOTE_ADDR "@geoLookup" "id:1100234,phase:1,log,drop,msg:'Custom WAF Rules: Allow NG Country',chain"
+# SecRule GEO:COUNTRY_CODE "!@streq GB"
+
+# SecRule REMOTE_ADDR "@geoLookup" "phase:1,chain,id:12345,status:403,drop,msg:'User Custom Geoblocking Rule has blocked access from a prohibited country',t:none"
+# SecRule GEO:COUNTRY_CODE "@pm CN HK"
+

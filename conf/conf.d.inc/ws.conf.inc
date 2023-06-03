@@ -2,6 +2,10 @@ proxy_redirect     default;
 #proxy_redirect off;
 proxy_http_version 1.1;
 
+#Requests sent within early data are subject to replay attacks.
+#To protect against such attacks at the application layer, the $ssl_early_data variable should be used. 
+proxy_set_header Early-Data $ssl_early_data;
+
 # Required for Jenkins websocket agents
 proxy_set_header   Connection        $connection_upgrade;
 proxy_set_header   Upgrade           $http_upgrade;

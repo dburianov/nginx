@@ -55,3 +55,8 @@ map $http_upgrade $connection_upgrade {
   default upgrade;
   '' close;
 }
+
+map $brotli_ratio $brotli_ratio_map {
+    "" 0.0;
+    default $brotli_ratio;
+}

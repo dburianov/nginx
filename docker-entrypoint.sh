@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export DNS_RESOLVERS="$(cat /etc/resolv.conf | grep nameserver | cut -d' ' -f2 | xargs)"
-NGINX_INC_FOLDER='/usr/local/nginx/conf/conf.d.inc'
+NGINX_INC_FOLDER='/usr/local/nginx/conf.docker/conf.d.inc'
 mkdir -p $NGINX_INC_FOLDER
 echo "resolver ${DNS_RESOLVERS} valid=30s;" | tee $NGINX_INC_FOLDER/resolver.conf.inc
 echo "resolver_timeout 5s;" | tee -a $NGINX_INC_FOLDER/resolver.conf.inc
@@ -11,7 +11,7 @@ ME=$( basename "$0" )
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 
-touch /usr/local/nginx/conf/entrypoint.test 2>/dev/null || { echo >&2 "$ME: error: can not modify /usr/local/nginx/conf/entrypoint.test (read-only file system?)"; exit 0; }
+touch /usr/local/nginx/conf.docker/entrypoint.test 2>/dev/null || { echo >&2 "$ME: error: can not modify /usr/local/nginx/conf.docker/entrypoint.test (read-only file system?)"; exit 0; }
 
 ceildiv() {
   num=$1
@@ -189,16 +189,21 @@ ncpu=$( printf "%s\n%s\n%s\n%s\n%s\n" \
 
 echo "worker_processes $ncpu;" | tee $NGINX_INC_FOLDER/worker_processes.conf.inc
 
-echo "PATH=$PATH:/usr/local/nginx/sbin" >> ~/.bashrc
+echo "PATH=$PATH:/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin" >> ~/.bashrc
+export PATH="$PATH:/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin"
+
+# generate ticket.key
+openssl rand 80 > /usr/local/nginx/conf.docker/ssl.dh/ticket.key
+
+openssl version -a
+openssl list -providers
+curl --version
 
 # test env
 env | sort
-echo -n "njs version is: "
+#echo -n "njs version is: "
 /usr/local/bin/njs -v
 /usr/local/nginx/sbin/nginx -V
 /usr/local/nginx/sbin/nginx -t
-
-# generate ticket.key
-openssl rand 80 > /usr/local/nginx/conf/ssl/ticket.key
 
 exec "$@"

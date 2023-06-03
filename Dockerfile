@@ -1,5 +1,6 @@
 ARG RESTY_IMAGE_BASE="ubuntu"
 ARG RESTY_IMAGE_TAG="jammy"
+ARG NPROC=1
 
 FROM ${RESTY_IMAGE_BASE}:${RESTY_IMAGE_TAG} AS ubuntu_core
 
@@ -29,32 +30,33 @@ EOT
 FROM ubuntu_core AS ubuntu-build
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 ENV DEBIAN_FRONTEND noninteractive
+
 RUN <<EOT
     apt-get -yqq update
     apt-get install -y --no-install-recommends --no-install-suggests \
         git unzip libxml2-dev \
-        libbz2-dev libcurl4-openssl-dev libmcrypt-dev libmhash2 \
+        libbz2-dev libmcrypt-dev libmhash2 \
         libmhash-dev libpcre3 libpcre3-dev make build-essential \
         libxslt1-dev libgeoip-dev \
         libpam-dev libgoogle-perftools-dev lua5.1 liblua5.1-0 \
-        liblua5.1-0-dev checkinstall wget libssl-dev \
-        mercurial meld openssh-server \
+        liblua5.1-0-dev checkinstall wget \
+        mercurial meld \
         autoconf automake cmake libass-dev libfreetype6-dev \
         libsdl2-dev libtheora-dev libtool libva-dev libvdpau-dev \
         libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev \
         texinfo zlib1g-dev pkgconf libyajl-dev libpcre++-dev liblmdb-dev \
-        gettext gnupg2 curl python3 jq ca-certificates gcc g++ \
+        gettext gnupg2 python3 jq ca-certificates gcc g++ \
         libssl-dev libpcre3-dev \
         zlib1g-dev libxslt-dev libgd-dev libgeoip-dev \
         libperl-dev gperf uthash-dev \
         flex bison
-    wget -qO /usr/local/bin/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip
-    gunzip /usr/local/bin/ninja.gz
-    chmod a+x /usr/local/bin/ninja
-    wget https://go.dev/dl/go1.20.1.linux-amd64.tar.gz
-    rm -rf /usr/local/go
-    tar -C /usr/local -xzf go1.20.1.linux-amd64.tar.gz
-    rm -rf go1.20.1.linux-amd64.tar.gz
+    #wget -qO /usr/local/bin/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip
+    #gunzip /usr/local/bin/ninja.gz
+    #chmod a+x /usr/local/bin/ninja
+    #wget https://go.dev/dl/go1.20.4.linux-amd64.tar.gz
+    #rm -rf /usr/local/go
+    #tar -C /usr/local -xzf go1.20.4.linux-amd64.tar.gz
+    #rm -rf go1.20.4.linux-amd64.tar.gz
     rm -rf /var/lib/apt/lists/*
     rm -rf /usr/share/doc/*
     rm -rf /usr/share/man/*
@@ -90,11 +92,36 @@ RUN <<EOT
     git clone https://github.com/openresty/set-misc-nginx-module.git /usr/src/set-misc-nginx-module
     git clone https://github.com/chobits/ngx_http_proxy_connect_module.git /usr/src/ngx_http_proxy_connect_module
     #https://www.alibabacloud.com/blog/how-to-use-nginx-as-an-https-forward-proxy-server_595799
+    git clone git://git.openssl.org/openssl.git /usr/src/openssl
+    git clone https://github.com/curl/curl.git /usr/src/curl
+    # git clone https://github.com/PCRE2Project/pcre2.git /usr/src/pcre2
+    # git clone https://github.com/luarocks/luarocks.git /usr/src/luarocks
 EOT
 
 RUN <<EOT
+    echo "Compiling openssl"
+    cd /usr/src/openssl
+    ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib
+    make -j ${NPROC}
+    make install
+    echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
+    ldconfig -v
+EOT
+RUN <<EOT
+    echo "Compiling cURL"
+    set -e
+    cd /usr/src/curl
+    autoreconf -fi
+    ./configure --prefix /usr/local/curl --with-openssl=/usr/local/ssl --with-zlib=/usr/local/zlib
+    make -j ${NPROC}
+    make install
+EOT
+
+RUN <<EOT
+    echo "Compiling luajit"
+    set -e
     cd /usr/src/luajit-2.0
-    make -j$(nproc)
+    make -j ${NPROC}
     make install
     export LUAJIT_LIB=/usr/local/lib
     export LUAJIT_INC=/usr/local/include/luajit-2.1
@@ -103,29 +130,45 @@ EOT
 
 RUN <<EOT
     echo "Compiling ModSecurity"
+    set -e
     cd /usr/src/ModSecurity
     git submodule init
     git submodule update
     ./build.sh
     ./configure
-    make -j$(nproc)
+    make -j ${NPROC}
     make install
 EOT
 
-RUN <<EOT
-    echo "Building boringssl ..."
-    export PATH=$PATH:/usr/local/go/bin
-    mkdir -p /usr/src/boringssl/build
-    cd /usr/src/boringssl/build
-    cmake -GNinja ..
-    ninja
-EOT
+#ARG CACHEBUST=0
+#RUN <<EOT
+#    echo "Building boringssl ..."
+#    export PATH=$PATH:/usr/local/go/bin
+#    mkdir -p /usr/src/boringssl/build
+#    cd /usr/src/boringssl/build
+#    cmake -GNinja ..
+#    ninja
+#EOT
 
-#    && echo "Apply nngx_http_proxy_connect_module patch" \
+#RUN <<EOT
+#    echo "Building libressl ..."
+#    cd /usr/src/
+#    wget https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-3.8.0.tar.gz
+#    tar xzf libressl-3.8.0.tar.gz
+#    cd /usr/src/libressl-3.8.0
+#    ./configure
+#    make -j ${NPROC}
+#    make install
+#EOT
+
+#    && echo "Apply ngx_http_proxy_connect_module patch" \
 #    && patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch \
 #    --add-module=/usr/src/ngx_http_proxy_connect_module \
     # Jaeger
+# opentracing
 RUN <<EOT
+    echo "Compiling opentracing"
+    set -e
     mkdir -p /usr/src/opentracing-cpp/.build
     cd /usr/src/opentracing-cpp/.build
     cmake \
@@ -134,11 +177,13 @@ RUN <<EOT
             -DBUILD_TESTING=OFF \
             -DCMAKE_BUILD_TYPE=Release \
             ..
-    make
+    make -j ${NPROC}
     make install
 EOT
 
 RUN <<EOT
+    echo "Compiling jaeger"
+    set -e
     mkdir -p /usr/src/jaeger-client-cpp/.build
     cd /usr/src/jaeger-client-cpp/.build
     cmake \
@@ -150,15 +195,35 @@ RUN <<EOT
             -DJAEGERTRACING_WARNINGS_AS_ERRORS=OFF \
             -DJAEGERTRACING_WITH_YAML_CPP=ON \
             ..
-    make
+    make -j ${NPROC}
     make install
 EOT
 
+#RUN <<EOT
+#    echo "Compiling pcre2"
+#    cd /usr/src/pcre2
+#    ./autogen.sh
+#    ./configure \
+#        CPPFLAGS='-Wall -Wextra' \
+#        --enable-pcre2-8 \
+#        --enable-pcre2-16 \
+#        --enable-pcre2-32 \
+#        --prefix=/usr/local/pcre2 \
+#        --disable-cpp \
+#        --enable-utf \
+#        --enable-unicode-properties \
+#        --enable-jit
+#    make -j ${NPROC}
+#    make install
+#EOT
+
 RUN <<EOT
     echo "Compiling Nginx"
+    set -e
     cd /usr/src/
-    hg clone -b quic http://hg.nginx.org/nginx-quic /usr/src/nginx
-    hg clone http://hg.nginx.org/njs
+    #hg clone -b quic https://hg.nginx.org/nginx-quic /usr/src/nginx
+    hg clone https://hg.nginx.org/nginx /usr/src/nginx
+    hg clone https://hg.nginx.org/njs
     echo "Init Nginx Brotli"
     cd /usr/src/ngx_brotli
     git submodule update --init
@@ -167,6 +232,9 @@ RUN <<EOT
     patch -p1 < /usr/src/nginx_upstream_check_module/check_1.20.1+.patch
     echo "Apply nngx_http_proxy_connect_module patch"
     patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch
+    echo "Apply patch for resolv.conf"
+    /usr/local/curl/bin/curl -s -o /usr/src/nginx-1.23.0-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-resolver_conf_parsing.patch
+    patch -p1 < /usr/src/nginx-1.23.0-resolver_conf_parsing.patch
     export ASAN_OPTIONS=detect_leaks=0
     export CFLAGS="-Wno-error"
     export LUAJIT_LIB=/usr/local/lib
@@ -224,24 +292,37 @@ RUN <<EOT
         --add-module=/usr/src/ngx_brotli \
         --add-module=/usr/src/set-misc-nginx-module \
         --add-module=/usr/src/ngx_http_proxy_connect_module \
-        --with-http_v3_module \
-        --with-stream_quic_module \
-        --with-cc-opt="-I/usr/src/boringssl/include -I${HUNTER_INSTALL_DIR}/include" \
-        --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto -L${HUNTER_INSTALL_DIR}/lib" \
-        --build=quic-boringssl
-    make -j$(nproc)
+        --with-cc-opt="-I/usr/src/ssl/include -I${HUNTER_INSTALL_DIR}/include" \
+        --with-ld-opt="-L/usr/src/ssl/lib -L${HUNTER_INSTALL_DIR}/lib" \
+    	--with-openssl=/usr/src/openssl \
+        --with-http_v3_module
+    make -j ${NPROC}
     make install
     cp -rf /usr/src/lua-resty-core/lib/* /usr/local/share/lua/5.1/
     cp -rf /usr/src/lua-resty-lrucache/lib/* /usr/local/share/lua/5.1/
-    wget https://github.com/marrotte/nginx-sts-exporter/releases/download/v0.0-port/nginx-vts-exporter.tar.gz -O /usr/src/nginx-vts-exporter.tar.gz
-    tar -C /usr/src -xzf /usr/src/nginx-vts-exporter.tar.gz
-    mv /usr/src/nginx-vts-exporter /usr/local/nginx/sbin/nginx-vts-exporter
 EOT
+#        --with-pcre2 \
+#        --add-module=/usr/src/ngx_http_proxy_connect_module
+#        --build=quic-libressl
+#        --with-cc-opt="-I${HUNTER_INSTALL_DIR}/include" \
+#        --with-ld-opt="-L${HUNTER_INSTALL_DIR}/lib" \
+#        --with-cc-opt="-I/usr/src/libressl/include -I${HUNTER_INSTALL_DIR}/include" \
+#        --with-ld-opt="-L/usr/src/libressl/lib -L${HUNTER_INSTALL_DIR}/lib" \
+#        --with-cc-opt="-I/usr/src/boringssl/include" \
+#        --with-ld-opt="-L/usr/src/boringssl/lib" \
+#        --with-http_v3_module \
+#        --with-cc-opt="-I/usr/src/libressl/include" \
+#        --with-ld-opt="-L/usr/src/libressl/lib" \
+#        --with-stream_quic_module \
+#        --with-cc-opt="-I/usr/src/boringssl/include -I${HUNTER_INSTALL_DIR}/include" \
+#        --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto -L${HUNTER_INSTALL_DIR}/lib" \
+#        --build=quic-boringssl
 
-    # njs scripting language
+# njs scripting language
 RUN <<EOT
     cd /usr/src/njs
-    ./configure --cc-opt="-O2 -m64 -march=x86-64 -mfpmath=sse -msse4.2 -pipe -fPIC -fomit-frame-pointer"
+    ./configure 
+    #--cc-opt="-O2 -m64 -march=x86-64 -mfpmath=sse -msse4.2 -pipe -fPIC -fomit-frame-pointer"
     make
     make unit_test
     install -m755 build/njs /usr/local/bin/
@@ -261,13 +342,35 @@ RUN <<EOT
     rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
 EOT
 
+#RUN <<EOT
+#    cd /usr/src/luarocks
+#    ./configure \
+#        #--with-lua=
+#    make -j ${NPROC}
+#    make install
+##    luarocks install luasocket
+##    luarocks install cookies
+##    luarocks install http
+##    luarocks install json
+##    luarocks install cjson
+##    luarocks install redis
+##    luarocks install url
+#EOT
+
+# lua modules
+# https://raw.githubusercontent.com/cloudflare/lua-resty-cookie/master/lib/resty/cookie.lua
+# https://raw.githubusercontent.com/lunarmodules/luasocket/master/src/url.lua
+# https://raw.githubusercontent.com/openresty/lua-resty-redis/master/lib/resty/redis.lua
+
 FROM ubuntu_core AS nginx-release
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 ARG CACHEBUST=0
 
 RUN <<EOT
     mkdir -p /usr/local/nginx/logs \
-            /usr/local/nginx/conf/ssl/ \
+            /usr/local/nginx/conf.docker/ssl.dh/ \
+            /usr/local/nginx/lua.docker \
+            /usr/local/nginx/conf/ \
             /tmp/modsecurity/tmp \
             /tmp/modsecurity/data \
             /tmp/modsecurity/upload
@@ -278,15 +381,19 @@ EOT
 
 COPY --from=ubuntu-build /usr/local /usr/local/
 COPY --from=ubuntu-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecurity/unicode.mapping
-#COPY --from=ubuntu-build /usr/src/ModSecurity/modsecurity.conf-recommended /usr/local/modsecurity/conf/modsecurity.conf
 COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
-#RUN date
 ADD docker-entrypoint.sh /docker-entrypoint.sh
-ADD conf /usr/local/nginx/conf
+ADD conf /usr/local/nginx/conf.docker
+ADD lua /usr/local/nginx/lua.docker
 ADD modsecurity /usr/local/modsecurity
-ADD dhparams* /usr/local/nginx/conf/ssl/
-#COPY dhparams4096.pem /usr/local/nginx/conf/ssl/
-RUN ldconfig /usr/local/nginx/lib/
+ADD dhparams* /usr/local/nginx/conf.docker/ssl.dh/
+RUN <<EOT
+    echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
+    echo "/usr/local/nginx/lib/" > /etc/ld.so.conf.d/nginx.conf
+    ldconfig -v
+    cp -rf /usr/local/nginx/conf.docker/* /usr/local/nginx/conf/
+    rm -rf /usr/bin/c_rehash /usr/bin/openssl /usr/local/ssl/share/*
+EOT
 
 EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
 
@@ -294,11 +401,5 @@ EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
 
 STOPSIGNAL SIGQUIT
 
-# test the configuration
-#RUN env | sort \
-#    && echo -n "njs version is: " \
-#    && njs -v \
-#    && /usr/local/nginx/sbin/nginx -V \
-#    && /usr/local/nginx/sbin/nginx -t
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/local/nginx/sbin/nginx", "-g", "daemon off;"]
