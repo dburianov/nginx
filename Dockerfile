@@ -1,13 +1,11 @@
 ARG RESTY_IMAGE_BASE="ubuntu"
 ARG RESTY_IMAGE_TAG="jammy"
-ARG NPROC=1
 
 FROM ${RESTY_IMAGE_BASE}:${RESTY_IMAGE_TAG} AS ubuntu_core
 
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 
 ENV DEBIAN_FRONTEND noninteractive
-#ENV TZ=Europe/Kiev
 ENV TZ=Europe/London
 RUN <<EOT
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
@@ -50,13 +48,6 @@ RUN <<EOT
         zlib1g-dev libxslt-dev libgd-dev libgeoip-dev \
         libperl-dev gperf uthash-dev \
         flex bison
-    #wget -qO /usr/local/bin/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip
-    #gunzip /usr/local/bin/ninja.gz
-    #chmod a+x /usr/local/bin/ninja
-    #wget https://go.dev/dl/go1.20.4.linux-amd64.tar.gz
-    #rm -rf /usr/local/go
-    #tar -C /usr/local -xzf go1.20.4.linux-amd64.tar.gz
-    #rm -rf go1.20.4.linux-amd64.tar.gz
     rm -rf /var/lib/apt/lists/*
     rm -rf /usr/share/doc/*
     rm -rf /usr/share/man/*
@@ -91,11 +82,8 @@ RUN <<EOT
     git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl
     git clone https://github.com/openresty/set-misc-nginx-module.git /usr/src/set-misc-nginx-module
     git clone https://github.com/chobits/ngx_http_proxy_connect_module.git /usr/src/ngx_http_proxy_connect_module
-    #https://www.alibabacloud.com/blog/how-to-use-nginx-as-an-https-forward-proxy-server_595799
     git clone git://git.openssl.org/openssl.git /usr/src/openssl
     git clone https://github.com/curl/curl.git /usr/src/curl
-    # git clone https://github.com/PCRE2Project/pcre2.git /usr/src/pcre2
-    # git clone https://github.com/luarocks/luarocks.git /usr/src/luarocks
 EOT
 
 RUN <<EOT
@@ -108,6 +96,7 @@ RUN <<EOT
     echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
     ldconfig -v
 EOT
+
 RUN <<EOT
     echo "Compiling cURL"
     set -e
@@ -141,32 +130,6 @@ RUN <<EOT
     make install
 EOT
 
-#ARG CACHEBUST=0
-#RUN <<EOT
-#    echo "Building boringssl ..."
-#    export PATH=$PATH:/usr/local/go/bin
-#    mkdir -p /usr/src/boringssl/build
-#    cd /usr/src/boringssl/build
-#    cmake -GNinja ..
-#    ninja
-#EOT
-
-#RUN <<EOT
-#    echo "Building libressl ..."
-#    cd /usr/src/
-#    wget https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-3.8.0.tar.gz
-#    tar xzf libressl-3.8.0.tar.gz
-#    cd /usr/src/libressl-3.8.0
-#    ./configure
-#    make -j$(NPROC)
-#    make install
-#EOT
-
-#    && echo "Apply ngx_http_proxy_connect_module patch" \
-#    && patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch \
-#    --add-module=/usr/src/ngx_http_proxy_connect_module \
-    # Jaeger
-# opentracing
 RUN <<EOT
     echo "Compiling opentracing"
     set -e
@@ -199,24 +162,6 @@ RUN <<EOT
     make
     make install
 EOT
-
-#RUN <<EOT
-#    echo "Compiling pcre2"
-#    cd /usr/src/pcre2
-#    ./autogen.sh
-#    ./configure \
-#        CPPFLAGS='-Wall -Wextra' \
-#        --enable-pcre2-8 \
-#        --enable-pcre2-16 \
-#        --enable-pcre2-32 \
-#        --prefix=/usr/local/pcre2 \
-#        --disable-cpp \
-#        --enable-utf \
-#        --enable-unicode-properties \
-#        --enable-jit
-#    make -j$(NPROC)
-#    make install
-#EOT
 
 RUN <<EOT
     echo "Compiling Nginx"
@@ -302,24 +247,7 @@ RUN <<EOT
     cp -rf /usr/src/lua-resty-core/lib/* /usr/local/share/lua/5.1/
     cp -rf /usr/src/lua-resty-lrucache/lib/* /usr/local/share/lua/5.1/
 EOT
-#        --with-pcre2 \
-#        --add-module=/usr/src/ngx_http_proxy_connect_module
-#        --build=quic-libressl
-#        --with-cc-opt="-I${HUNTER_INSTALL_DIR}/include" \
-#        --with-ld-opt="-L${HUNTER_INSTALL_DIR}/lib" \
-#        --with-cc-opt="-I/usr/src/libressl/include -I${HUNTER_INSTALL_DIR}/include" \
-#        --with-ld-opt="-L/usr/src/libressl/lib -L${HUNTER_INSTALL_DIR}/lib" \
-#        --with-cc-opt="-I/usr/src/boringssl/include" \
-#        --with-ld-opt="-L/usr/src/boringssl/lib" \
-#        --with-http_v3_module \
-#        --with-cc-opt="-I/usr/src/libressl/include" \
-#        --with-ld-opt="-L/usr/src/libressl/lib" \
-#        --with-stream_quic_module \
-#        --with-cc-opt="-I/usr/src/boringssl/include -I${HUNTER_INSTALL_DIR}/include" \
-#        --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto -L${HUNTER_INSTALL_DIR}/lib" \
-#        --build=quic-boringssl
 
-# njs scripting language
 RUN <<EOT
     echo "Compiling njs"
     set -e
@@ -344,26 +272,6 @@ RUN <<EOT
         /usr/local/nginx/lib/*.so*
     rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
 EOT
-
-#RUN <<EOT
-#    cd /usr/src/luarocks
-#    ./configure \
-#        #--with-lua=
-#    make -j$(NPROC)
-#    make install
-##    luarocks install luasocket
-##    luarocks install cookies
-##    luarocks install http
-##    luarocks install json
-##    luarocks install cjson
-##    luarocks install redis
-##    luarocks install url
-#EOT
-
-# lua modules
-# https://raw.githubusercontent.com/cloudflare/lua-resty-cookie/master/lib/resty/cookie.lua
-# https://raw.githubusercontent.com/lunarmodules/luasocket/master/src/url.lua
-# https://raw.githubusercontent.com/openresty/lua-resty-redis/master/lib/resty/redis.lua
 
 FROM ubuntu_core AS nginx-release
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
