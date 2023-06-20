@@ -1,18 +1,18 @@
 ### Custom Nginx build with static modules
 ### ModSecurity rules
-[GHA build v4.0/dev]
+```GHA build v4.0/dev```
 ### ModSecurity
-[ModSecurity-nginx v1.0.3 (rules loaded inline/local/remote: 0/820/0)]
+```ModSecurity-nginx v1.0.3 (rules loaded inline/local/remote: 0/820/0)```
 ### OpenSSL
-[OpenSSL 3.2.0-dev  (Library: OpenSSL 3.2.0-dev )]
+```OpenSSL 3.2.0-dev  (Library: OpenSSL 3.2.0-dev )```
 ### cURL
-[curl 8.2.0-DEV (x86_64-pc-linux-gnu) libcurl/8.2.0-DEV OpenSSL/3.2.0 zlib/1.2.11 brotli/1.0.9]
+```curl 8.2.0-DEV (x86_64-pc-linux-gnu) libcurl/8.2.0-DEV OpenSSL/3.2.0 zlib/1.2.11 brotli/1.0.9
 Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
-Features: alt-svc AsynchDNS brotli HSTS HTTPS-proxy IPv6 Largefile libz NTLM NTLM_WB SSL threadsafe TLS-SRP UnixSockets
+Features: alt-svc AsynchDNS brotli HSTS HTTPS-proxy IPv6 Largefile libz NTLM NTLM_WB SSL threadsafe TLS-SRP UnixSockets```
 ### njs
-[0.8.0]
+```0.8.0```
 ### Nginx
-[nginx version: nginx/1.25.2]
+```nginx version: nginx/1.25.2
 built with OpenSSL 3.2.0-dev$
 TLS SNI support enabled
 configure arguments:$
@@ -67,4 +67,4 @@ configure arguments:$
   --with-cc-opt='-I/usr/src/ssl/include -I/root/.hunter/_Base/d45d77d/b2a6029/3b7ee27/Install/include'$
   --with-ld-opt='-L/usr/src/ssl/lib -L/root/.hunter/_Base/d45d77d/b2a6029/3b7ee27/Install/lib'$
   --with-openssl=/usr/src/openssl$
-  --with-http_v3_module
+  --with-http_v3_module```
