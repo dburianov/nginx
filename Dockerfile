@@ -91,7 +91,7 @@ RUN <<EOT
     set -e
     cd /usr/src/openssl
     ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib
-    make
+    make -j $(nproc)
     make install
     echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
     ldconfig -v
@@ -103,7 +103,7 @@ RUN <<EOT
     cd /usr/src/curl
     autoreconf -fi
     ./configure --prefix /usr/local/curl --with-openssl=/usr/local/ssl --with-zlib=/usr/local/zlib
-    make
+    make -j $(nproc)
     make install
 EOT
 
@@ -111,7 +111,7 @@ RUN <<EOT
     echo "Compiling luajit"
     set -e
     cd /usr/src/luajit-2.0
-    make
+    make -j $(nproc)
     make install
     export LUAJIT_LIB=/usr/local/lib
     export LUAJIT_INC=/usr/local/include/luajit-2.1
@@ -126,7 +126,7 @@ RUN <<EOT
     git submodule update
     ./build.sh
     ./configure
-    make
+    make -j $(nproc)
     make install
 EOT
 
@@ -141,7 +141,7 @@ RUN <<EOT
             -DBUILD_TESTING=OFF \
             -DCMAKE_BUILD_TYPE=Release \
             ..
-    make
+    make -j $(nproc)
     make install
 EOT
 
@@ -159,7 +159,7 @@ RUN <<EOT
             -DJAEGERTRACING_WARNINGS_AS_ERRORS=OFF \
             -DJAEGERTRACING_WITH_YAML_CPP=ON \
             ..
-    make
+    make -j $(nproc)
     make install
 EOT
 
@@ -242,7 +242,7 @@ RUN <<EOT
         --with-ld-opt="-L/usr/src/ssl/lib -L${HUNTER_INSTALL_DIR}/lib" \
     	--with-openssl=/usr/src/openssl \
         --with-http_v3_module
-    make
+    make -j $(nproc)
     make install
     cp -rf /usr/src/lua-resty-core/lib/* /usr/local/share/lua/5.1/
     cp -rf /usr/src/lua-resty-lrucache/lib/* /usr/local/share/lua/5.1/
@@ -254,7 +254,7 @@ RUN <<EOT
     cd /usr/src/njs
     ./configure 
     #--cc-opt="-O2 -m64 -march=x86-64 -mfpmath=sse -msse4.2 -pipe -fPIC -fomit-frame-pointer"
-    make
+    make -j $(nproc)
     #make unit_test
     install -m755 build/njs /usr/local/bin/
 EOT
