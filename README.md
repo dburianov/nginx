@@ -80,3 +80,19 @@ configure arguments:
   --with-openssl=/usr/src/openssl
   --with-http_v3_module
 ```
+### OS
+```
+ubuntu jammy (20.04)
+```
+### GeoIP.dat
+```
+from 21 June 2023 https://mailfud.org/geoip-legacy/
+```
+### Build
+```bash
+tag=$(date +%Y%m%d%H%M)
+sudo docker buildx build --push \
+  --platform linux/amd64,linux/arm64 \
+  --tag dburianov/nginx-aio:buildx-latest \
+  --tag dburianov/nginx-aio:buildx-$tag .
+```
