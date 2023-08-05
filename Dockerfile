@@ -5,8 +5,9 @@ FROM ${RESTY_IMAGE_BASE}:${RESTY_IMAGE_TAG} AS ubuntu_core
 
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV TZ=Europe/London
+ENV DEBIAN_FRONTEND noninteractive \
+    TZ=Europe/London
+
 RUN <<EOT
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
     echo $TZ > /etc/timezone
@@ -27,7 +28,12 @@ EOT
 
 FROM ubuntu_core AS ubuntu-build
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND noninteractive \
+    GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=webserver/v1.0.3 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.1
 
 RUN <<EOT
     apt-get -yqq update
@@ -57,6 +63,8 @@ RUN <<EOT
 EOT
 
 RUN <<EOT
+    echo "git clone"
+    set -e
     git clone https://github.com/openresty/luajit2.git /usr/src/luajit-2.0
     git clone https://github.com/simpl/ngx_devel_kit.git /usr/src/ngx_devel_kit
     git clone https://github.com/openresty/lua-nginx-module.git /usr/src/lua-nginx-module
@@ -73,26 +81,27 @@ RUN <<EOT
     git clone https://github.com/openresty/lua-resty-core.git /usr/src/lua-resty-core
     git clone https://github.com/openresty/lua-resty-lrucache.git /usr/src/lua-resty-lrucache
     git clone https://github.com/hnlq715/status-nginx-module.git /usr/src/status-nginx-module
-    git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity /usr/src/ModSecurity
+    git clone --depth 1 -b ${MODSECURITY_VERSION} --single-branch https://github.com/SpiderLabs/ModSecurity /usr/src/ModSecurity
     git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/src/ModSecurity-nginx
-    git clone https://github.com/opentracing/opentracing-cpp.git /usr/src/opentracing-cpp
-    git clone https://github.com/opentracing-contrib/nginx-opentracing.git /usr/src/nginx-opentracing
-    git clone --depth=1 --single-branch -b v0.9.0 https://github.com/jaegertracing/jaeger-client-cpp.git /usr/src/jaeger-client-cpp
     git clone https://github.com/google/ngx_brotli /usr/src/ngx_brotli
     git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl
     git clone https://github.com/openresty/set-misc-nginx-module.git /usr/src/set-misc-nginx-module
     git clone https://github.com/chobits/ngx_http_proxy_connect_module.git /usr/src/ngx_http_proxy_connect_module
     git clone git://git.openssl.org/openssl.git /usr/src/openssl
     git clone https://github.com/curl/curl.git /usr/src/curl
+    git clone --shallow-submodules --depth 1 --recurse-submodules -b ${GRPC_VERSION} https://github.com/grpc/grpc.git /usr/src/grpc
+    git clone --shallow-submodules --depth 1 --recurse-submodules -b ${OTEL_CPP_VERSION} \
+      https://github.com/open-telemetry/opentelemetry-cpp.git /usr/src/opentelemetry-cpp
+    git clone -b ${OTEL_CONTRIB_VERSION} https://github.com/open-telemetry/opentelemetry-cpp-contrib.git /usr/src/opentelemetry-cpp-contrib
 EOT
 
 RUN <<EOT
     echo "Compiling openssl"
     set -e
     cd /usr/src/openssl
-    ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib
-    make -j $(nproc)
-    make install
+    ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib enable-quic
+    make -j $(nproc) build_sw
+    make install_sw
     echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
     ldconfig -v
 EOT
@@ -131,64 +140,51 @@ RUN <<EOT
 EOT
 
 RUN <<EOT
-    echo "Compiling opentracing"
-    set -e
-    mkdir -p /usr/src/opentracing-cpp/.build
-    cd /usr/src/opentracing-cpp/.build
-    cmake \
-            -DBUILD_MOCKTRACER=OFF \
-            -DBUILD_STATIC_LIBS=OFF \
-            -DBUILD_TESTING=OFF \
-            -DCMAKE_BUILD_TYPE=Release \
-            ..
-    make -j $(nproc)
-    make install
-EOT
-
-RUN <<EOT
-    echo "Compiling jaeger"
-    set -e
-    mkdir -p /usr/src/jaeger-client-cpp/.build
-    cd /usr/src/jaeger-client-cpp/.build
-    cmake \
-            -DBUILD_TESTING=OFF \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DHUNTER_CONFIGURATION_TYPES=Release \
-            -DJAEGERTRACING_BUILD_EXAMPLES=OFF \
-            -DJAEGERTRACING_COVERAGE=OFF \
-            -DJAEGERTRACING_WARNINGS_AS_ERRORS=OFF \
-            -DJAEGERTRACING_WITH_YAML_CPP=ON \
-            ..
-    make -j $(nproc)
-    make install
-EOT
-
-RUN <<EOT
-    echo "Compiling Nginx"
+    echo "Get Nginx and dependency sources"
     set -e
     cd /usr/src/
     #hg clone -b quic https://hg.nginx.org/nginx-quic /usr/src/nginx
-    hg clone https://hg.nginx.org/nginx /usr/src/nginx
+    hg clone -r ${NGINX_VERSION} https://hg.nginx.org/nginx /usr/src/nginx
     hg clone https://hg.nginx.org/njs
     echo "Init Nginx Brotli"
     cd /usr/src/ngx_brotli
     git submodule update --init
+    echo "Get Openresty patches for Nginx"
+    /usr/local/curl/bin/curl -s -o /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-resolver_conf_parsing.patch
+    /usr/local/curl/bin/curl -s -o /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-reuseport_close_unused_fds.patch
+    /usr/local/curl/bin/curl -s -o /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-log_escape_non_ascii.patch
+EOT
+
+RUN <<EOT
+    echo "Apply Nginx patches"
+    set -e
     cd /usr/src/nginx
     echo "Apply nginx_upstream_check_module patch check"
     patch -p1 < /usr/src/nginx_upstream_check_module/check_1.20.1+.patch
     echo "Apply nngx_http_proxy_connect_module patch"
     patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch
-    echo "Apply patch for resolv.conf"
-    /usr/local/curl/bin/curl -s -o /usr/src/nginx-1.23.0-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-resolver_conf_parsing.patch
-    patch -p1 < /usr/src/nginx-1.23.0-resolver_conf_parsing.patch
+    echo "Apply patch from Openresty"
+    patch -p1 < /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch
+    patch -p1 < /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch
+    patch -p1 < /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch
+EOT
+
+RUN <<EOT
+    echo "Compiling Nginx"
+    set -e
+    cd /usr/src/nginx
     export ASAN_OPTIONS=detect_leaks=0
     export CFLAGS="-Wno-error"
     export LUAJIT_LIB=/usr/local/lib
     export LUAJIT_INC=/usr/local/include/luajit-2.1
-    export HUNTER_INSTALL_DIR=$(cat /usr/src/jaeger-client-cpp/.build/_3rdParty/Hunter/install-root-dir)
     ldconfig
     cp ./auto/configure .
     ./configure \
+        --http-client-body-temp-path=/tmp/nginx/client-body-temp \
+        --http-proxy-temp-path=/tmp/nginx/proxy-temp \
+        --http-fastcgi-temp-path=/tmp/nginx/fastcgi-temp \
+        --http-uwsgi-temp-path=/tmp/nginx/uwsgi-temp \
+        --http-scgi-temp-path=/tmp/nginx/scgi-temp \
         --with-http_xslt_module \
         --with-http_ssl_module \
         --with-http_mp4_module \
@@ -238,8 +234,8 @@ RUN <<EOT
         --add-module=/usr/src/ngx_brotli \
         --add-module=/usr/src/set-misc-nginx-module \
         --add-module=/usr/src/ngx_http_proxy_connect_module \
-        --with-cc-opt="-I/usr/src/ssl/include -I${HUNTER_INSTALL_DIR}/include" \
-        --with-ld-opt="-L/usr/src/ssl/lib -L${HUNTER_INSTALL_DIR}/lib" \
+        --with-cc-opt="-I/usr/src/ssl/include" \
+        --with-ld-opt="-L/usr/src/ssl/lib" \
     	--with-openssl=/usr/src/openssl \
         --with-http_v3_module
     make -j $(nproc)
@@ -259,16 +255,71 @@ RUN <<EOT
     install -m755 build/njs /usr/local/bin/
 EOT
 
+RUN <<EOT
+    echo "Compiling gRPC"
+    set -e
+    mkdir -p /usr/src/grpc/cmake/build
+    cd /usr/src/grpc/cmake/build
+    cmake \
+        -DgRPC_INSTALL=ON \
+        -DgRPC_BUILD_TESTS=OFF \
+        -DCMAKE_INSTALL_PREFIX=/install \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF \
+        ../..
+    make -j $(nproc)
+    make install
+EOT
+
+RUN <<EOT
+    echo "Compiling Opentelemetry cpp"
+    set -e
+    mkdir -p /usr/src/opentelemetry-cpp/build
+    cd /usr/src/opentelemetry-cpp/build
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/install \
+        -DCMAKE_PREFIX_PATH=/install \
+        -DWITH_OTLP=ON \
+        -DWITH_OTLP_GRPC=ON \
+        -DWITH_OTLP_HTTP=OFF \
+        -DBUILD_TESTING=OFF \
+        -DWITH_EXAMPLES=OFF \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        ..
+    make -j $(nproc)
+    make install
+EOT
+
+RUN <<EOT
+    echo "Compiling Opentelemetry for Nginx"
+    set -e
+    # temporary fix for libcurl
+    apt update
+    apt install -y libcurl4-openssl-dev
+
+    mkdir -p /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
+    cd /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
+    cmake \
+        -DNGINX_BIN=/usr/local/nginx/sbin/nginx \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_PREFIX_PATH=/install \
+        -DCMAKE_INSTALL_PREFIX=/usr/local/nginx/modules \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        ..
+    make -j $(nproc)
+    make install
+EOT
+
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/nginx/sbin/
 RUN <<EOT
     mkdir -p /usr/local/nginx/lib/
     ldd /usr/local/nginx/sbin/nginx |  cut -d ' ' -f 3 | grep '/' | xargs -i cp {} /usr/local/nginx/lib/
-    export HUNTER_INSTALL_DIR=$(cat /usr/src/jaeger-client-cpp/.build/_3rdParty/Hunter/install-root-dir)
-    cp -p ${HUNTER_INSTALL_DIR}/lib/libyaml-cpp.so* /usr/local/lib
     strip \
-        /usr/local/lib/libopentracing.so* \
-        /usr/local/lib/libyaml-cpp.so* \
-        /usr/local/lib/libjaegertracing.so* \
         /usr/local/nginx/lib/*.so*
     rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
 EOT
@@ -284,7 +335,8 @@ RUN <<EOT
             /usr/local/nginx/conf/ \
             /tmp/modsecurity/tmp \
             /tmp/modsecurity/data \
-            /tmp/modsecurity/upload
+            /tmp/modsecurity/upload \
+            /tmp/nginx
     touch /usr/local/nginx/logs/access.log /usr/local/nginx/logs/error.log
     ln -sf /dev/stdout /usr/local/nginx/logs/access.log
     ln -sf /dev/stderr /usr/local/nginx/logs/error.log
@@ -293,14 +345,17 @@ EOT
 COPY --from=ubuntu-build /usr/local /usr/local/
 COPY --from=ubuntu-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecurity/unicode.mapping
 COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
+COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 ADD conf /usr/local/nginx/conf.docker
 ADD lua /usr/local/nginx/lua.docker
 ADD modsecurity /usr/local/modsecurity
 ADD dhparams* /usr/local/nginx/conf.docker/ssl.dh/
 RUN <<EOT
+    echo "Configuring libs and copy default configs"
     echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
     echo "/usr/local/nginx/lib/" > /etc/ld.so.conf.d/nginx.conf
+    echo "/usr/local/curl/lib" > /etc/ld.so.conf.d/curl.conf
     ldconfig -v
     cp -rf /usr/local/nginx/conf.docker/* /usr/local/nginx/conf/
     rm -rf /usr/bin/c_rehash /usr/bin/openssl /usr/local/ssl/share/*
@@ -308,7 +363,7 @@ EOT
 
 EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
 
-#VOLUME ["/usr/local/nginx/conf", "/usr/local/nginx/html", "/usr/local/nginx/lua", "/usr/local/nginx/logs", "/usr/local/nginx/cache"]
+VOLUME ["/usr/local/nginx/conf", "/usr/local/nginx/html", "/usr/local/nginx/lua", "/usr/local/nginx/logs", "/usr/local/nginx/cache"]
 
 STOPSIGNAL SIGQUIT
 

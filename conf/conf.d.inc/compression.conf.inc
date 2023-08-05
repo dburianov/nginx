@@ -24,11 +24,13 @@ brotli_types
     text/css
     text/javascript
     text/plain
-    text/xml;
-             
+    text/xml
+    text/html
+    application/vnd.apple.mpegurl
+    audio/x-mpegurl;
+
 gzip on;
 gzip_disable "msie6";
-
 gzip_vary on;
 gzip_proxied any;
 gzip_comp_level 6;
@@ -54,4 +56,7 @@ gzip_types
     text/css
     text/javascript
     text/plain
-    text/xml;
+    text/xml
+    text/html
+    application/vnd.apple.mpegurl
+    audio/x-mpegurl;

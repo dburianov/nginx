@@ -59,11 +59,9 @@ log_format logs_json_v1_1 escape=json
   '"upstream_cache_status":"$upstream_cache_status_map",'
   '"upstream_addr":"$upstream_addr_map",'
   '"upstream_status":$upstream_status_map,'
-  '"gzip_ratio":$gzip_ratio_map,'
   '"scheme":"$scheme",'
   '"request_id":"$request_id",'
   '"request_length":$request_length,'
   '"bytes_sent":$bytes_sent,'
-  '"http_range":"$http_range_map",'
-  '"brotli_ratio":$brotli_ratio_map'
+  '"http_range":"$http_range_map"'
 '}';

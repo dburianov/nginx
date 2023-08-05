@@ -13,6 +13,7 @@ ssl_prefer_server_ciphers on;
 #ssl_prefer_server_ciphers off;
 
 #ssl_ecdh_curve secp521r1:secp384r1:prime256v1;
+#ssl_ecdh_curve X25519:secp521r1:secp384r1;
 ssl_ecdh_curve auto;
 #ssl_ciphers EECDH+AESGCM:EECDH+AES256:!CBC;
 ssl_ciphers "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES256-GCM-SHA384:AES256-GCM-SHA384:!CBC";
@@ -21,16 +22,14 @@ ssl_ciphers "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECD
 
 #openssl rand 80 > ticket.key
 ssl_session_ticket_key /usr/local/nginx/conf.docker/ssl.dh/ticket.key;
-#ssl_session_ticket_key /run/nginx-ephemeral/nginx_session_ticket_curr;
-#ssl_session_ticket_key /run/nginx-ephemeral/nginx_session_ticket_prev;
-#ssl_session_ticket_key /run/nginx-ephemeral/nginx_session_ticket_next;
 
 # OCSP stapling
 ssl_stapling on;
 ssl_stapling_verify on;
 
 # # verify chain of trust of OCSP response using Root CA and Intermediate certs
-#ssl_trusted_certificate /certs/dir/chain.pem;
+# ssl_trusted_certificate /certs/dir/chain.pem;
+# ssl_trusted_certificate /etc/nginx/ssl/fullchain.pem;
 
 #Due to usage of BoringSSL instead of OpenSSL, some directives may not work, e.g. ssl_conf_command.
 #Besides, direct OCSP stapling via ssl_stapling on; ssl_stapling_verify on; does not work too.
