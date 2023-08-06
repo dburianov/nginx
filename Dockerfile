@@ -1,13 +1,11 @@
 ARG RESTY_IMAGE_BASE="ubuntu"
 ARG RESTY_IMAGE_TAG="jammy"
 
-FROM ${RESTY_IMAGE_BASE}:${RESTY_IMAGE_TAG} AS ubuntu_core
-
+#FROM ${RESTY_IMAGE_BASE}:${RESTY_IMAGE_TAG} AS ubuntu_core
+FROM dburianov/ubuntu:buildx-latest AS ubuntu_core
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
-
-ENV DEBIAN_FRONTEND noninteractive \
-    TZ=Europe/London
-
+ENV DEBIAN_FRONTEND noninteractive
+ENV TZ=Europe/London
 RUN <<EOT
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
     echo $TZ > /etc/timezone
@@ -15,7 +13,6 @@ EOT
 
 RUN <<EOT
     apt-get -yqq update
-    apt-get upgrade -y
     apt-get install -y --no-install-recommends --no-install-suggests \
         software-properties-common lua-socket lua-zlib
     rm -rf /var/lib/apt/lists/*
@@ -28,12 +25,6 @@ EOT
 
 FROM ubuntu_core AS ubuntu-build
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
-ENV DEBIAN_FRONTEND noninteractive \
-    GRPC_VERSION=v1.49.2 \
-    OTEL_CPP_VERSION=v1.8.1 \
-    OTEL_CONTRIB_VERSION=webserver/v1.0.3 \
-    MODSECURITY_VERSION=v3/master \
-    NGINX_VERSION=release-1.25.1
 
 RUN <<EOT
     apt-get -yqq update
@@ -61,6 +52,13 @@ RUN <<EOT
     apt-get autoremove -y
     apt-get clean -y
 EOT
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=webserver/v1.0.3 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.1
 
 RUN <<EOT
     echo "git clone"
