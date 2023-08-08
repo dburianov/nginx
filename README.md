@@ -13,27 +13,33 @@ OpenSSL 3.2.0-dev  (Library: OpenSSL 3.2.0-dev )
 ```
 ### cURL
 ```
-curl 8.2.0-DEV (x86_64-pc-linux-gnu) libcurl/8.2.0-DEV OpenSSL/3.2.0 zlib/1.2.11 brotli/1.0.9
+curl 8.3.0-DEV (x86_64-pc-linux-gnu) libcurl/8.3.0-DEV OpenSSL/3.2.0 zlib/1.2.11 brotli/1.0.9
 Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
 Features: alt-svc AsynchDNS brotli HSTS HTTPS-proxy IPv6 Largefile libz NTLM NTLM_WB SSL threadsafe TLS-SRP UnixSockets
 ```
 ### njs
 ```
-0.8.0
+0.8.1
 ```
 ### Nginx
 ```
-nginx version: nginx/1.25.2
+nginx version: nginx/1.25.1
 built with OpenSSL 3.2.0-dev
 TLS SNI support enabled
 configure arguments:
+  --http-client-body-temp-path=/tmp/nginx/client-body-temp
+  --http-proxy-temp-path=/tmp/nginx/proxy-temp
+  --http-fastcgi-temp-path=/tmp/nginx/fastcgi-temp
+  --http-uwsgi-temp-path=/tmp/nginx/uwsgi-temp
+  --http-scgi-temp-path=/tmp/nginx/scgi-temp
   --with-http_xslt_module
   --with-http_ssl_module
   --with-http_mp4_module
   --with-http_flv_module
   --with-http_secure_link_module
   --with-http_dav_module
-  --with-http_auth_request_module --with-compat
+  --with-http_auth_request_module
+  --with-compat
   --with-http_geoip_module
   --with-http_image_filter_module
   --with-mail
@@ -75,24 +81,38 @@ configure arguments:
   --add-module=/usr/src/ngx_brotli
   --add-module=/usr/src/set-misc-nginx-module
   --add-module=/usr/src/ngx_http_proxy_connect_module
-  --with-cc-opt='-I/usr/src/ssl/include -I/root/.hunter/_Base/d45d77d/b2a6029/3b7ee27/Install/include'
-  --with-ld-opt='-L/usr/src/ssl/lib -L/root/.hunter/_Base/d45d77d/b2a6029/3b7ee27/Install/lib'
+  --with-cc-opt=-I/usr/src/ssl/include
+  --with-ld-opt=-L/usr/src/ssl/lib
   --with-openssl=/usr/src/openssl
   --with-http_v3_module
 ```
 ### OS
 ```
-ubuntu jammy (20.04)
+Ubuntu 22.04.3 LTS (Jammy Jellyfish)
 ```
 ### GeoIP.dat
 ```
 from 21 June 2023 https://mailfud.org/geoip-legacy/
 ```
+### Usage
+```bash
+sudo docker run \
+  -d \
+  --rm \
+  --name nginx-aio \
+  -p 80:80/tcp \
+  -p 443:443/tcp \
+  -p 443:443/udp \
+  -v /opt/nginx/nginx.conf:/usr/local/nginx/conf/nginx.conf \
+  -v /etc/letsencrypt/live/server_name/fullchain.pem:/usr/local/nginx/conf/ssl/server_name/fullchain.pem:ro \
+  -v /etc/letsencrypt/live/server_name/privkey.pem:/usr/local/nginx/conf/ssl/server_name/privkey.pem:ro \
+  dburianov/nginx-aio:buildx-latest
+```
 ### Build
 ```bash
 tag=$(date +%Y%m%d%H%M)
 sudo docker buildx build --push \
-  --platform linux/amd64,linux/arm64 \
-  --tag dburianov/nginx-aio:buildx-latest \
-  --tag dburianov/nginx-aio:buildx-$tag .
+  --platform linux/amd64,linux/arm64/v8 \
+  --tag nginx-aio:buildx-latest \
+  --tag nginx-aio:buildx-$tag .
 ```

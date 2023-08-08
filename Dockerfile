@@ -56,7 +56,7 @@ EOT
 ENV DEBIAN_FRONTEND noninteractive
 ENV GRPC_VERSION=v1.49.2 \
     OTEL_CPP_VERSION=v1.8.1 \
-    OTEL_CONTRIB_VERSION=webserver/v1.0.3 \
+    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
     MODSECURITY_VERSION=v3/master \
     NGINX_VERSION=release-1.25.1
 
@@ -90,7 +90,7 @@ RUN <<EOT
     git clone --shallow-submodules --depth 1 --recurse-submodules -b ${GRPC_VERSION} https://github.com/grpc/grpc.git /usr/src/grpc
     git clone --shallow-submodules --depth 1 --recurse-submodules -b ${OTEL_CPP_VERSION} \
       https://github.com/open-telemetry/opentelemetry-cpp.git /usr/src/opentelemetry-cpp
-    git clone -b ${OTEL_CONTRIB_VERSION} https://github.com/open-telemetry/opentelemetry-cpp-contrib.git /usr/src/opentelemetry-cpp-contrib
+    git clone https://github.com/open-telemetry/opentelemetry-cpp-contrib.git /usr/src/opentelemetry-cpp-contrib
 EOT
 
 RUN <<EOT
