@@ -27,22 +27,23 @@ FROM ubuntu_core AS ubuntu-build
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 
 RUN <<EOT
-    apt-get -yqq update
-    apt-get install -y --no-install-recommends --no-install-suggests \
+    echo "apt update"
+    set -e
+    apt -yqq update
+EOT
+RUN <<EOT
+    apt install -y --no-install-recommends --no-install-suggests \
         git unzip libxml2-dev \
         libbz2-dev libmcrypt-dev libmhash2 \
-        libmhash-dev libpcre3 libpcre3-dev make build-essential \
-        libxslt1-dev libgeoip-dev \
+        libmhash-dev libpcre3 libpcre3-dev libpcre++-dev make build-essential \
+        libxslt-dev libxslt1-dev libgeoip-dev \
         libpam-dev libgoogle-perftools-dev lua5.1 liblua5.1-0 \
         liblua5.1-0-dev checkinstall wget \
         mercurial meld \
-        autoconf automake cmake libass-dev libfreetype6-dev \
-        libsdl2-dev libtheora-dev libtool libva-dev libvdpau-dev \
-        libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev \
-        texinfo zlib1g-dev pkgconf libyajl-dev libpcre++-dev liblmdb-dev \
+        autoconf automake cmake libtool \
+        texinfo zlib1g-dev pkgconf libyajl-dev liblmdb-dev \
         gettext gnupg2 python3 jq ca-certificates gcc g++ \
-        libssl-dev libpcre3-dev \
-        zlib1g-dev libxslt-dev libgd-dev libgeoip-dev \
+        libssl-dev libgd-dev \
         libperl-dev gperf uthash-dev \
         flex bison
     rm -rf /var/lib/apt/lists/*
@@ -297,9 +298,15 @@ RUN <<EOT
     echo "Compiling Opentelemetry for Nginx"
     set -e
     # temporary fix for libcurl
-    apt update
-    apt install -y libcurl4-openssl-dev
-
+    #apt update
+    #apt install -y libcurl4-openssl-dev
+    echo "Configuring libs and copy default configs"
+    echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
+    echo "/usr/local/nginx/lib/" > /etc/ld.so.conf.d/nginx.conf
+    echo "/usr/local/curl/lib" > /etc/ld.so.conf.d/curl.conf
+    ldconfig -v
+    cd /usr/src/opentelemetry-cpp-contrib
+    git checkout ${OTEL_CONTRIB_VERSION}
     mkdir -p /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
     cd /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
     cmake \
