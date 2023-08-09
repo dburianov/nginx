@@ -225,7 +225,7 @@ RUN <<EOT
         --add-module=/usr/src/ngx_http_proxy_connect_module \
         --with-cc-opt="-I/usr/src/ssl/include" \
         --with-ld-opt="-L/usr/src/ssl/lib" \
-    	--with-openssl=/usr/src/openssl \
+        --with-openssl=/usr/src/openssl \
         --with-http_v3_module
     make -j $(nproc)
     make install
@@ -327,13 +327,13 @@ ARG CACHEBUST=0
 
 RUN <<EOT
     mkdir -p /usr/local/nginx/logs \
-            /usr/local/nginx/conf.docker/ssl.dh/ \
-            /usr/local/nginx/lua.docker \
-            /usr/local/nginx/conf/ \
-            /tmp/modsecurity/tmp \
-            /tmp/modsecurity/data \
-            /tmp/modsecurity/upload \
-            /tmp/nginx
+             /usr/local/nginx/conf.docker/ssl.dh/ \
+             /usr/local/nginx/lua.docker \
+             /usr/local/nginx/conf/ \
+             /tmp/modsecurity/tmp \
+             /tmp/modsecurity/data \
+             /tmp/modsecurity/upload \
+             /tmp/nginx
     touch /usr/local/nginx/logs/access.log /usr/local/nginx/logs/error.log
     ln -sf /dev/stdout /usr/local/nginx/logs/access.log
     ln -sf /dev/stderr /usr/local/nginx/logs/error.log
