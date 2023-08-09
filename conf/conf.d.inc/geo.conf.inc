@@ -1,4 +1,4 @@
-geoip_country /usr/local/nginx/conf.docker/GeoIP.dat;
+geoip_country /usr/local/nginx/conf.docker/conf.geoip/GeoIP.dat;
 map $geoip_country_code $allowed_country {
     default yes;
     RU      no;
