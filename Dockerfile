@@ -324,6 +324,7 @@ RUN <<EOT
     rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
 EOT
 
+FROM dburianov/ubuntu:geoip-latest AS geoip
 FROM ubuntu_core AS nginx-release
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 ARG CACHEBUST=0
@@ -346,6 +347,7 @@ COPY --from=ubuntu-build /usr/local /usr/local/
 COPY --from=ubuntu-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecurity/unicode.mapping
 COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
 COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
+COPY --from=geoip /geoip /usr/local/nginx/conf.docker/conf
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 ADD conf /usr/local/nginx/conf.docker
 ADD lua /usr/local/nginx/lua.docker
