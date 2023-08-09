@@ -333,7 +333,7 @@ RUN <<EOT
     mkdir -p /usr/local/nginx/logs \
              /usr/local/nginx/conf.docker/ssl.dh/ \
              /usr/local/nginx/lua.docker \
-             /usr/local/nginx/conf.docker/conf.geoip \
+             /usr/local/nginx/geoip \
              /usr/local/nginx/conf/ \
              /tmp/modsecurity/tmp \
              /tmp/modsecurity/data \
@@ -348,7 +348,7 @@ COPY --from=ubuntu-build /usr/local /usr/local/
 COPY --from=ubuntu-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecurity/unicode.mapping
 COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
 COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
-COPY --from=geoip /geoip /usr/local/nginx/conf.docker/conf.geoip
+COPY --from=geoip /geoip /usr/local/nginx/geoip
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 ADD conf /usr/local/nginx/conf.docker
 ADD lua /usr/local/nginx/lua.docker

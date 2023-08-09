@@ -16,6 +16,9 @@ proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
 proxy_set_header   X-Forwarded-Proto $scheme;
 proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
 proxy_set_header   X-Forwarded-Port  $server_port;
+# mitigate HTTPoxy Vulnerability
+# https://www.nginx.com/blog/mitigating-the-httpoxy-vulnerability-with-nginx/
+proxy_set_header   Proxy             "";
 proxy_max_temp_file_size 0;
 
 #this is the maximum upload size
