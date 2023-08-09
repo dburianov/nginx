@@ -1,3 +1,6 @@
+image: docker
+services:
+  - "docker:dind"
 stages:
 - test
 - publish
@@ -7,7 +10,9 @@ variables:
     IMAGE_LATEST: dburianov/nginx-aio:latest
     IMAGE_COMMIT: dburianov/nginx-aio:$CI_COMMIT_SHORT_SHA
     CI: 'false'
-    DOCKER_HOST: $DOCKER_HOST
+#    DOCKER_HOST: $DOCKER_HOST
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
 
 sast:
   stage: test
