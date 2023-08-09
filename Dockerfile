@@ -14,7 +14,7 @@ EOT
 RUN <<EOT
     apt-get -yqq update
     apt-get install -y --no-install-recommends --no-install-suggests \
-        software-properties-common lua-socket lua-zlib
+        lua-socket lua-zlib
     rm -rf /var/lib/apt/lists/*
     rm -rf /usr/share/doc/*
     rm -rf /usr/share/man/*
@@ -44,7 +44,7 @@ RUN <<EOT
         texinfo zlib1g-dev pkgconf libyajl-dev liblmdb-dev \
         gettext gnupg2 python3 jq ca-certificates gcc g++ \
         libssl-dev libgd-dev \
-        libperl-dev gperf uthash-dev \
+        libperl-dev gperf uthash-dev libcurl4-openssl-dev curl \
         flex bison
     rm -rf /var/lib/apt/lists/*
     rm -rf /usr/share/doc/*
@@ -106,16 +106,6 @@ RUN <<EOT
 EOT
 
 RUN <<EOT
-    echo "Compiling cURL"
-    set -e
-    cd /usr/src/curl
-    autoreconf -fi
-    ./configure --prefix /usr/local/curl --with-openssl=/usr/local/ssl --with-zlib=/usr/local/zlib
-    make -j $(nproc)
-    make install
-EOT
-
-RUN <<EOT
     echo "Compiling luajit"
     set -e
     cd /usr/src/luajit-2.0
@@ -149,9 +139,9 @@ RUN <<EOT
     cd /usr/src/ngx_brotli
     git submodule update --init
     echo "Get Openresty patches for Nginx"
-    /usr/local/curl/bin/curl -s -o /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-resolver_conf_parsing.patch
-    /usr/local/curl/bin/curl -s -o /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-reuseport_close_unused_fds.patch
-    /usr/local/curl/bin/curl -s -o /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-log_escape_non_ascii.patch
+    curl -s -o /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-resolver_conf_parsing.patch
+    curl -s -o /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-reuseport_close_unused_fds.patch
+    curl -s -o /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-log_escape_non_ascii.patch
 EOT
 
 RUN <<EOT
@@ -297,14 +287,6 @@ EOT
 RUN <<EOT
     echo "Compiling Opentelemetry for Nginx"
     set -e
-    # temporary fix for libcurl
-    #apt update
-    #apt install -y libcurl4-openssl-dev
-    echo "Configuring libs and copy default configs"
-    echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
-    echo "/usr/local/nginx/lib/" > /etc/ld.so.conf.d/nginx.conf
-    echo "/usr/local/curl/lib" > /etc/ld.so.conf.d/curl.conf
-    ldconfig -v
     cd /usr/src/opentelemetry-cpp-contrib
     git checkout ${OTEL_CONTRIB_VERSION}
     mkdir -p /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
@@ -316,6 +298,16 @@ RUN <<EOT
         -DCMAKE_INSTALL_PREFIX=/usr/local/nginx/modules \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         ..
+    make -j $(nproc)
+    make install
+EOT
+
+RUN <<EOT
+    echo "Compiling cURL"
+    set -e
+    cd /usr/src/curl
+    autoreconf -fi
+    ./configure --prefix /usr/local/curl --with-openssl=/usr/local/ssl --with-zlib=/usr/local/zlib
     make -j $(nproc)
     make install
 EOT
