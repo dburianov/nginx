@@ -31,6 +31,6 @@ publish_develop:
 #        - docker buildx build -t $IMAGE_LATEST -t $IMAGE_COMMIT -f Dockerfile ./
         - tag=$(date +%Y%m%d%H%M)
 #        - sudo docker buildx build --push --platform linux/amd64 --tag dburianov/nginx-aio:buildx-latest --tag dburianov/nginx-aio:buildx-$tag --push .
-        - sudo docker buildx build --push --platform linux/amd64,linux/arm64/v8 --tag dburianov/nginx-aio:buildx-latest --tag dburianov/nginx-aio:buildx-$tag --progress=plain . 2>&1 | tee build.log
+        - docker buildx build --push --platform linux/amd64,linux/arm64/v8 --tag dburianov/nginx-aio:buildx-latest --tag dburianov/nginx-aio:buildx-$tag --progress=plain . &> build.log
 #        - docker push $IMAGE_LATEST
 #        - docker push $IMAGE_COMMIT
