@@ -18,7 +18,7 @@ sast:
 include:
 - template: Security/SAST.gitlab-ci.yml
 
-publish_develop:
+docker_build:
     image: docker:latest
     stage: publish
 #    only:
@@ -29,15 +29,16 @@ publish_develop:
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         #$CI_REGISTRY
+        - docker buildx create --use
 #        - docker buildx build -t $IMAGE_LATEST -t $IMAGE_COMMIT -f Dockerfile ./
         - tag=$(date +%Y%m%d%H%M)
-        - docker buildx build 
-          --platform linux/amd64 
-          --tag dburianov/nginx-aio:buildx-linux-amd64-latest 
-          --tag dburianov/nginx-aio:buildx-linux-amd64-$tag 
-          --load 
-          --progress plain 
-          .
+#        - docker buildx build
+#          --platform linux/amd64
+#          --tag dburianov/nginx-aio:buildx-linux-amd64-latest
+#          --tag dburianov/nginx-aio:buildx-linux-amd64-$tag
+#          --load
+#          --progress plain
+#          .
         - docker buildx build 
           --platform linux/arm64/v8 
           --tag dburianov/nginx-aio:buildx-linux-arm64-v8-latest 
