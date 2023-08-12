@@ -34,8 +34,9 @@ docker_build:
         - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
           --platform linux/amd64,linux/arm64/v8
-          --tag dburianov/nginx-aio:buildx-linux-amd64-latest
-          --tag dburianov/nginx-aio:buildx-linux-amd64-$tag
+          --tag dburianov/nginx-aio:latest
+          --tag dburianov/nginx-aio:buildx-latest
+          --tag dburianov/nginx-aio:buildx-$tag
           --push
           --progress plain
           .
