@@ -1,3 +1,5 @@
+
+[![pipeline status](https://gitlab.com/burianov/nginx-aio/badges/main/pipeline.svg)](https://gitlab.com/burianov/nginx-aio/-/commits/main)[![coverage report](https://gitlab.com/burianov/nginx-aio/badges/main/coverage.svg)](https://gitlab.com/burianov/nginx-aio/-/commits/main)[![Latest Release](https://gitlab.com/burianov/nginx-aio/-/badges/release.svg)](https://gitlab.com/burianov/nginx-aio/-/releases)
 ### Custom Nginx build with static modules
 ### ModSecurity rules
 ```
