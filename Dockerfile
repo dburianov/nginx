@@ -233,8 +233,8 @@ RUN <<EOT
         --add-module=/usr/src/ngx_brotli \
         --add-module=/usr/src/set-misc-nginx-module \
         --add-module=/usr/src/ngx_http_proxy_connect_module \
-        --with-cc-opt="-I/usr/src/ssl/include" \
-        --with-ld-opt="-L/usr/src/ssl/lib" \
+        --with-cc-opt="-I/usr/src/boringssl/include" \
+        --with-ld-opt="-L/usr/src/boringssl/build/ssl /usr/src/boringssl/build/crypto" \
         --with-openssl=/usr/src/openssl \
         --with-http_v3_module
     make -j $(nproc)
