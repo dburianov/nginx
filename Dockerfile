@@ -122,13 +122,15 @@ RUN <<EOT
     make install
 EOT
 
-RUN echo "Building boringssl ..." \
-    && export PATH=$PATH:/usr/local/go/bin \
-    && cd /usr/src/boringssl \
-    && mkdir build \
-    && cd build \
-    && cmake -GNinja .. \
-    && ninja
+RUN <<EOT
+    echo "Building boringssl ..."
+    export PATH=$PATH:/usr/local/go/bin
+    cd /usr/src/boringssl
+    mkdir build
+    cd build
+    cmake -GNinja ..
+    ninja
+EOT
 
 RUN <<EOT
     echo "Get Nginx and dependency sources"
@@ -226,7 +228,7 @@ RUN <<EOT
         --add-module=/usr/src/set-misc-nginx-module \
         --add-module=/usr/src/ngx_http_proxy_connect_module \
         --with-cc-opt="-I/usr/src/boringssl/include" \
-        --with-ld-opt="-L/usr/src/boringssl/build/ssl /usr/src/boringssl/build/crypto" \
+        --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
         --with-openssl=/usr/src/openssl \
         --with-http_v3_module
     make -j $(nproc)
