@@ -317,8 +317,8 @@ RUN <<EOT
 EOT
 
 FROM dburianov/ubuntu:geoip-latest AS geoip
+FROM dburianov/ubuntu:curl-latest AS curl
 FROM ubuntu_core AS nginx-release
-FROM dburianov/ubuntu:curl-latest AS curl_distro
 
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 ARG CACHEBUST=0
@@ -343,8 +343,8 @@ COPY --from=ubuntu-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecu
 COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
 COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
 COPY --from=geoip /geoip /usr/local/nginx/geoip
-COPY --from=curl_distro /usr/local/curl/ /usr/local/curl/
-COPY --from=curl_distro /opt/quiche/target/release /opt/quiche/target/release
+COPY --from=curl /usr/local/curl/ /usr/local/curl/
+COPY --from=curl /opt/quiche/target/release /opt/quiche/target/release
 
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 ADD conf /usr/local/nginx/conf.docker
