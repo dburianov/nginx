@@ -45,7 +45,14 @@ RUN <<EOT
         gettext gnupg2 python3 jq ca-certificates gcc g++ \
         libssl-dev libgd-dev \
         libperl-dev gperf uthash-dev \
-        flex bison
+        flex bison curl
+    wget -qO /usr/local/bin/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip
+    gunzip /usr/local/bin/ninja.gz
+    chmod a+x /usr/local/bin/ninja
+    wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+    rm -rf /usr/local/go
+    tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
+    rm -rf go1.21.0.linux-amd64.tar.gz
     rm -rf /var/lib/apt/lists/*
     rm -rf /usr/share/doc/*
     rm -rf /usr/share/man/*
@@ -86,33 +93,10 @@ RUN <<EOT
     git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl
     git clone https://github.com/openresty/set-misc-nginx-module.git /usr/src/set-misc-nginx-module
     git clone https://github.com/chobits/ngx_http_proxy_connect_module.git /usr/src/ngx_http_proxy_connect_module
-    git clone git://git.openssl.org/openssl.git /usr/src/openssl
-    git clone https://github.com/curl/curl.git /usr/src/curl
     git clone --shallow-submodules --depth 1 --recurse-submodules -b ${GRPC_VERSION} https://github.com/grpc/grpc.git /usr/src/grpc
     git clone --shallow-submodules --depth 1 --recurse-submodules -b ${OTEL_CPP_VERSION} \
       https://github.com/open-telemetry/opentelemetry-cpp.git /usr/src/opentelemetry-cpp
     git clone https://github.com/open-telemetry/opentelemetry-cpp-contrib.git /usr/src/opentelemetry-cpp-contrib
-EOT
-
-RUN <<EOT
-    echo "Compiling openssl"
-    set -e
-    cd /usr/src/openssl
-    ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib enable-quic
-    make -j $(nproc) build_sw
-    make install_sw
-    echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
-    ldconfig -v
-EOT
-
-RUN <<EOT
-    echo "Compiling cURL"
-    set -e
-    cd /usr/src/curl
-    autoreconf -fi
-    ./configure --prefix /usr/local/curl --with-openssl=/usr/local/ssl --with-zlib=/usr/local/zlib
-    make -j $(nproc)
-    make install
 EOT
 
 RUN <<EOT
@@ -138,6 +122,14 @@ RUN <<EOT
     make install
 EOT
 
+RUN echo "Building boringssl ..." \
+    && export PATH=$PATH:/usr/local/go/bin \
+    && cd /usr/src/boringssl \
+    && mkdir build \
+    && cd build \
+    && cmake -GNinja .. \
+    && ninja
+
 RUN <<EOT
     echo "Get Nginx and dependency sources"
     set -e
@@ -149,9 +141,9 @@ RUN <<EOT
     cd /usr/src/ngx_brotli
     git submodule update --init
     echo "Get Openresty patches for Nginx"
-    /usr/local/curl/bin/curl -s -o /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-resolver_conf_parsing.patch
-    /usr/local/curl/bin/curl -s -o /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-reuseport_close_unused_fds.patch
-    /usr/local/curl/bin/curl -s -o /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-log_escape_non_ascii.patch
+    curl -s -o /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-resolver_conf_parsing.patch
+    curl -s -o /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-reuseport_close_unused_fds.patch
+    curl -s -o /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-log_escape_non_ascii.patch
 EOT
 
 RUN <<EOT
@@ -326,6 +318,8 @@ EOT
 
 FROM dburianov/ubuntu:geoip-latest AS geoip
 FROM ubuntu_core AS nginx-release
+FROM dburianov/ubuntu:curl-latest AS curl_distro
+
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 ARG CACHEBUST=0
 
@@ -349,6 +343,9 @@ COPY --from=ubuntu-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecu
 COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
 COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
 COPY --from=geoip /geoip /usr/local/nginx/geoip
+COPY --from=curl_distro /usr/local/curl/ /usr/local/curl/
+COPY --from=curl_distro /opt/quiche/target/release /opt/quiche/target/release
+
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 ADD conf /usr/local/nginx/conf.docker
 ADD lua /usr/local/nginx/lua.docker
@@ -363,6 +360,9 @@ RUN <<EOT
     cp -rf /usr/local/nginx/conf.docker/* /usr/local/nginx/conf/
     rm -rf /usr/bin/c_rehash /usr/bin/openssl /usr/local/ssl/share/*
 EOT
+
+ENV PATH=$PATH:/usr/local/curl/bin
+RUN curl -s https://raw.githubusercontent.com/b4b4r07/httpstat/master/httpstat.sh >/usr/local/bin/httpstat.sh && chmod +x /usr/local/bin/httpstat.sh
 
 EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
 
