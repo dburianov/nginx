@@ -229,7 +229,7 @@ RUN <<EOT
         --add-module=/usr/src/ngx_http_proxy_connect_module \
         --with-cc-opt="-I/usr/src/boringssl/include" \
         --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
-        --with-openssl=/usr/src/openssl \
+        --build=quic-boringssl \
         --with-http_v3_module
     make -j $(nproc)
     make install
@@ -355,12 +355,10 @@ ADD modsecurity /usr/local/modsecurity
 ADD dhparams* /usr/local/nginx/conf.docker/ssl.dh/
 RUN <<EOT
     echo "Configuring libs and copy default configs"
-    echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
     echo "/usr/local/nginx/lib/" > /etc/ld.so.conf.d/nginx.conf
     echo "/usr/local/curl/lib" > /etc/ld.so.conf.d/curl.conf
     ldconfig -v
     cp -rf /usr/local/nginx/conf.docker/* /usr/local/nginx/conf/
-    rm -rf /usr/bin/c_rehash /usr/bin/openssl /usr/local/ssl/share/*
 EOT
 
 ENV PATH=$PATH:/usr/local/curl/bin
