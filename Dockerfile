@@ -320,6 +320,7 @@ EOT
 
 FROM dburianov/ubuntu:geoip-latest AS geoip
 FROM dburianov/ubuntu:curl-latest AS curl
+FROM dburianov/ubuntu:openssl-latest AS openssl
 FROM ubuntu_core AS nginx-release
 
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
@@ -348,6 +349,7 @@ COPY --from=geoip /geoip /usr/local/nginx/geoip
 COPY --from=curl /usr/local/curl/ /usr/local/curl/
 COPY --from=curl /opt/quiche/target/release /opt/quiche/target/release
 COPY --from=curl /usr/local/bin/httpstat.sh /usr/local/bin/httpstat.sh
+COPY --from=openssl /usr/local/ssl/ /usr/local/ssl/
 
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 ADD conf /usr/local/nginx/conf.docker
@@ -358,11 +360,14 @@ RUN <<EOT
     echo "Configuring libs and copy default configs"
     echo "/usr/local/nginx/lib/" > /etc/ld.so.conf.d/nginx.conf
     echo "/usr/local/curl/lib" > /etc/ld.so.conf.d/curl.conf
+    echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
+    echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/openssl.conf
     ldconfig -v
     cp -rf /usr/local/nginx/conf.docker/* /usr/local/nginx/conf/
 EOT
 
-ENV PATH=$PATH:/usr/local/curl/bin
+ENV LD_LIBRARY_PATH=/usr/local/ssl/lib
+ENV PATH=/usr/local/curl/bin:/usr/local/ssl/bin:$PATH
 
 EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
 

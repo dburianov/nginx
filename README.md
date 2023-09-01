@@ -15,9 +15,9 @@ OpenSSL 3.2.0-dev  (Library: OpenSSL 3.2.0-dev )
 ```
 ### cURL
 ```
-curl 8.3.0-DEV (x86_64-pc-linux-gnu) libcurl/8.3.0-DEV OpenSSL/3.2.0 zlib/1.2.11 brotli/1.0.9
+curl 8.3.0-DEV (x86_64-pc-linux-gnu) libcurl/8.3.0-DEV BoringSSL quiche/0.18.0
 Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
-Features: alt-svc AsynchDNS brotli HSTS HTTPS-proxy IPv6 Largefile libz NTLM NTLM_WB SSL threadsafe TLS-SRP UnixSockets
+Features: alt-svc AsynchDNS HSTS HTTP3 HTTPS-proxy IPv6 Largefile NTLM NTLM_WB SSL threadsafe UnixSockets
 ```
 ### njs
 ```
@@ -26,7 +26,7 @@ Features: alt-svc AsynchDNS brotli HSTS HTTPS-proxy IPv6 Largefile libz NTLM NTL
 ### Nginx
 ```
 nginx version: nginx/1.25.1
-built with OpenSSL 3.2.0-dev
+built with OpenSSL 1.1.1 (compatible; BoringSSL) (running with BoringSSL)
 TLS SNI support enabled
 configure arguments:
   --http-client-body-temp-path=/tmp/nginx/client-body-temp

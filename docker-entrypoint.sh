@@ -189,8 +189,8 @@ ncpu=$( printf "%s\n%s\n%s\n%s\n%s\n" \
 
 echo "worker_processes $ncpu;" | tee $NGINX_INC_FOLDER/worker_processes.conf.inc
 
-echo "PATH=$PATH:/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin" >> ~/.bashrc
-export PATH="$PATH:/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin"
+echo "PATH=/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH" >> ~/.bashrc
+export PATH="/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH"
 
 # generate ticket.key
 openssl rand 80 > /usr/local/nginx/conf.docker/ssl.dh/ticket.key
