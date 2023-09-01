@@ -347,6 +347,7 @@ COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/ngin
 COPY --from=geoip /geoip /usr/local/nginx/geoip
 COPY --from=curl /usr/local/curl/ /usr/local/curl/
 COPY --from=curl /opt/quiche/target/release /opt/quiche/target/release
+COPY --from=curl /usr/local/bin/httpstat.sh /usr/local/bin/httpstat.sh
 
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 ADD conf /usr/local/nginx/conf.docker
@@ -362,7 +363,6 @@ RUN <<EOT
 EOT
 
 ENV PATH=$PATH:/usr/local/curl/bin
-RUN curl -s https://raw.githubusercontent.com/b4b4r07/httpstat/master/httpstat.sh >/usr/local/bin/httpstat.sh && chmod +x /usr/local/bin/httpstat.sh
 
 EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
 

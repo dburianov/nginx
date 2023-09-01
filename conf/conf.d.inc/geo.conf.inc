@@ -1,5 +1,5 @@
 geoip_country /usr/local/nginx/geoip/GeoIP.dat;
-geoip_city    /usr/local/nginx/geoip/GeoLiteCity.dat;
+geoip_city    /usr/local/nginx/geoip/GeoIPCity.dat;
 geoip_org     /usr/local/nginx/geoip/GeoIPASNum.dat;
 
 map $geoip_country_code $allowed_country {
