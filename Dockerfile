@@ -347,7 +347,6 @@ COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
 COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
 COPY --from=geoip /geoip /usr/local/nginx/geoip
 COPY --from=curl /usr/local/curl/ /usr/local/curl/
-COPY --from=curl /opt/quiche/target/release /opt/quiche/target/release
 COPY --from=curl /usr/local/bin/httpstat.sh /usr/local/bin/httpstat.sh
 COPY --from=openssl /usr/local/ssl/ /usr/local/ssl/
 
