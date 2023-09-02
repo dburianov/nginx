@@ -193,7 +193,7 @@ echo "PATH=/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH" >
 export PATH="/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH"
 
 # generate ticket.key
-openssl rand 80 > /usr/local/nginx/conf.docker/ssl.dh/ticket.key
+openssl rand 80 > /tmp/nginx/ticket.key
 
 openssl version -a
 openssl list -providers

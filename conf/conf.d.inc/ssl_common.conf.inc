@@ -20,7 +20,7 @@ ssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECD
 #ssl_buffer_size 4k;
 
 #openssl rand 80 > ticket.key
-ssl_session_ticket_key /usr/local/nginx/conf.docker/ssl.dh/ticket.key;
+ssl_session_ticket_key /tmp/nginx/ticket.key;
 
 # OCSP stapling
 ssl_stapling on;
