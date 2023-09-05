@@ -25,6 +25,7 @@ EOT
 
 FROM ubuntu_core AS ubuntu-build
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ARG TARGETARCH
 
 RUN <<EOT
     echo "apt update"
@@ -49,10 +50,10 @@ RUN <<EOT
     wget -qO /usr/local/bin/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip
     gunzip /usr/local/bin/ninja.gz
     chmod a+x /usr/local/bin/ninja
-    wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+    wget https://go.dev/dl/go1.21.0.linux-$TARGETARCH.tar.gz
     rm -rf /usr/local/go
-    tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
-    rm -rf go1.21.0.linux-amd64.tar.gz
+    tar -C /usr/local -xzf go1.21.0.linux-$TARGETARCH.tar.gz
+    rm -rf go1.21.0.linux-$TARGETARCH.tar.gz
     rm -rf /var/lib/apt/lists/*
     rm -rf /usr/share/doc/*
     rm -rf /usr/share/man/*
@@ -347,6 +348,7 @@ COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
 COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
 COPY --from=geoip /geoip /usr/local/nginx/geoip
 COPY --from=curl /usr/local/curl/ /usr/local/curl/
+#COPY --from=curl /opt/quiche/target/release /opt/quiche/target/release
 COPY --from=curl /usr/local/bin/httpstat.sh /usr/local/bin/httpstat.sh
 COPY --from=openssl /usr/local/ssl/ /usr/local/ssl/
 
