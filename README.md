@@ -4,6 +4,7 @@
 ### ModSecurity rules
 ```
 GHA build v4.0/dev
+4 September 2023
 ```
 ### ModSecurity
 ```
