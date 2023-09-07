@@ -3,8 +3,9 @@ services:
   - "docker:dind"
 stages:
 - test
-- publish
-- docker
+- docker_prepare
+- docker_borringssl
+- docker_quictls
 
 variables:
     IMAGE_LATEST: dburianov/nginx-aio:latest
@@ -18,9 +19,17 @@ sast:
 include:
 - template: Security/SAST.gitlab-ci.yml
 
-docker_build:
+docker_prepare:
     image: docker:latest
-    stage: publish
+    stage: docker_prepare
+    services:
+        - docker:dind
+    script:
+        - docker buildx create --use
+
+docker_borringssl_build:
+    image: docker:latest
+    stage: docker_borringssl
 #    only:
 #        - develop
 #    environment: develop
@@ -29,17 +38,25 @@ docker_build:
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         #$CI_REGISTRY
-        - docker buildx create --use
 #        - docker buildx build -t $IMAGE_LATEST -t $IMAGE_COMMIT -f Dockerfile ./
         - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
           --platform linux/amd64
           --tag dburianov/nginx-aio:latest
+          --tag dburianov/nginx-aio:borringssl-latest
           --tag dburianov/nginx-aio:buildx-latest
           --tag dburianov/nginx-aio:buildx-$tag
           --push
           --progress plain
           .
+        - docker buildx build
+          --platform linux/amd64,linux/arm64/v8
+          --tag dburianov/nginx-aio:quictls-latest
+          --push
+          --progress plain
+          .
+
+
 #        - docker buildx build
 #          --platform linux/amd64
 #          --tag dburianov/nginx-aio:buildx-linux-amd64-latest
@@ -62,5 +79,22 @@ docker_build:
 #              dburianov/nginx-aio:buildx-linux-amd64-latest
 #              dburianov/nginx-aio:buildx-linux-arm64-v8-$tag
 #        - docker manifest push dburianov/nginx-aio:buildx-$tag
+        - docker logout
+
+docker_quictls_build:
+    image: docker:latest
+    stage: docker_quictls
+    services:
+        - docker:dind
+    script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+        - tag=$(date +%Y%m%d%H%M)
+        - docker buildx build
+          --platform linux/amd64,linux/arm64/v8
+          --tag dburianov/nginx-aio:quictls-latest
+          --tag dburianov/nginx-aio:quictls-$tag
+          --push
+          --progress plain
+          .
         - docker logout
 
