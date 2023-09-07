@@ -23,7 +23,7 @@ map $upstream_status $upstream_status_map {
     default $upstream_status;
 }
 map $upstream_response_time $upstream_response_time_map {
-    "" 0;
+    "" 0.0;
     default $upstream_response_time;
 }
 map $gzip_ratio $gzip_ratio_map {
@@ -59,4 +59,17 @@ map $http_upgrade $connection_upgrade {
 map $brotli_ratio $brotli_ratio_map {
     "" 0.0;
     default $brotli_ratio;
+}
+
+map $gzip_ratio:$brotli_ratio $ratio_map {
+    ":" 0.0;
+    "^[0-9]+\.[0-9]+:[0-9]+\.[0-9]+$" 0.00;
+    "^[0-9]+\.[0-9]+:*" $gzip_ratio;
+    "^:[ ][0-9]+\.[0-9]+$" $brotli_ratio;
+}
+
+map $http2:$http3 $version_http {
+    ":" "old";
+    ".+:$" $http2;
+    "^:.+" $http3;
 }
