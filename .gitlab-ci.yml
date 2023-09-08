@@ -3,7 +3,6 @@ services:
   - "docker:dind"
 stages:
 - test
-- docker_prepare
 - docker_borringssl
 - docker_quictls
 
@@ -19,14 +18,6 @@ sast:
 include:
 - template: Security/SAST.gitlab-ci.yml
 
-docker_prepare:
-    image: docker:latest
-    stage: docker_prepare
-    services:
-        - docker:dind
-    script:
-        - docker buildx create --use
-
 docker_borringssl_build:
     image: docker:latest
     stage: docker_borringssl
@@ -39,6 +30,7 @@ docker_borringssl_build:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         #$CI_REGISTRY
 #        - docker buildx build -t $IMAGE_LATEST -t $IMAGE_COMMIT -f Dockerfile ./
+        - docker buildx create --use
         - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
           --platform linux/amd64
@@ -49,14 +41,6 @@ docker_borringssl_build:
           --push
           --progress plain
           .
-        - docker buildx build
-          --platform linux/amd64,linux/arm64/v8
-          --tag dburianov/nginx-aio:quictls-latest
-          --push
-          --progress plain
-          .
-
-
 #        - docker buildx build
 #          --platform linux/amd64
 #          --tag dburianov/nginx-aio:buildx-linux-amd64-latest
@@ -88,6 +72,7 @@ docker_quictls_build:
         - docker:dind
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+        - docker buildx create --use
         - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
           --platform linux/amd64,linux/arm64/v8
