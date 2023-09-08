@@ -21,15 +21,10 @@ include:
 docker_borringssl_build:
     image: docker:latest
     stage: docker_borringssl
-#    only:
-#        - develop
-#    environment: develop
     services:
         - docker:dind
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
-        #$CI_REGISTRY
-#        - docker buildx build -t $IMAGE_LATEST -t $IMAGE_COMMIT -f Dockerfile ./
         - docker buildx create --use
         - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
@@ -41,28 +36,6 @@ docker_borringssl_build:
           --push
           --progress plain
           .
-#        - docker buildx build
-#          --platform linux/amd64
-#          --tag dburianov/nginx-aio:buildx-linux-amd64-latest
-#          --tag dburianov/nginx-aio:buildx-linux-amd64-$tag
-#          --load
-#          --progress plain
-#          .
-#        - docker buildx build
-#          --platform linux/arm64/v8
-#          --tag dburianov/nginx-aio:buildx-linux-arm64-v8-latest
-#          --tag dburianov/nginx-aio:buildx-linux-arm64-v8-$tag
-#          --load
-#          --progress plain
-#          .
-#        - docker buildx build --push --platform linux/amd64,linux/arm64/v8 --tag dburianov/nginx-aio:buildx-latest --tag dburianov/nginx-aio:buildx-$tag .
-#        - docker push $IMAGE_LATEST
-#        - docker push $IMAGE_COMMIT
-#        - docker manifest create --insecure
-#            dburianov/nginx-aio:buildx-$tag 
-#              dburianov/nginx-aio:buildx-linux-amd64-latest
-#              dburianov/nginx-aio:buildx-linux-arm64-v8-$tag
-#        - docker manifest push dburianov/nginx-aio:buildx-$tag
         - docker logout
 
 docker_quictls_build:
@@ -80,6 +53,7 @@ docker_quictls_build:
           --tag dburianov/nginx-aio:quictls-$tag
           --push
           --progress plain
+          -f Dockerfile.quictls
           .
         - docker logout
 
