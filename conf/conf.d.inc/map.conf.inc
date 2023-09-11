@@ -56,20 +56,57 @@ map $http_upgrade $connection_upgrade {
   '' close;
 }
 
-map $brotli_ratio $brotli_ratio_map {
-    "" 0.0;
-    default $brotli_ratio;
-}
-
 map $gzip_ratio:$brotli_ratio $ratio_map {
+    "~^[0-9]+\.[0-9]+:[0-9]+\.[0-9]+$" 0.00;
+    "~^[0-9]+\.[0-9]+:$" $gzip_ratio;
+    "~^:[0-9]+\.[0-9]+$" $brotli_ratio;
+#    default $gzip_ratio:$brotli_ratio;
     ":" 0.0;
-    "^[0-9]+\.[0-9]+:[0-9]+\.[0-9]+$" 0.00;
-    "^[0-9]+\.[0-9]+:*" $gzip_ratio;
-    "^:[ ][0-9]+\.[0-9]+$" $brotli_ratio;
 }
 
 map $http2:$http3 $version_http {
     ":" "old";
     ".+:$" $http2;
     "^:.+" $http3;
+    default "old"
 }
+
+map $ssl_alpn_protocol $ssl_alpn_protocol_map {
+    "" "NO_SSL";
+    default $ssl_alpn_protocol;
+}
+map $ssl_cipher $ssl_cipher_map {
+    "" "NO_SSL";
+    default $ssl_cipher;
+}
+
+map $ssl_curve $ssl_curve_map {
+    "" "NO_SSL";
+    default $ssl_curve;
+}
+
+map $ssl_early_data $ssl_early_data_map {
+    "" "NO_SSL";
+    default $ssl_early_data;
+}
+
+map $ssl_protocol $ssl_protocol_map {
+    "" "NO_SSL";
+    default $ssl_protocol;
+}
+
+map $ssl_server_name $ssl_server_name_map {
+    "" "NO_SSL";
+    default $ssl_server_name;
+}
+
+map $ssl_session_id $ssl_session_id_map {
+    "" "NO_SSL";
+    default $ssl_session_id;
+}
+
+map $ssl_session_reused $ssl_session_reused_map {
+    "" "NO_SSL";
+    default $ssl_session_reused;
+}
+
