@@ -68,7 +68,7 @@ map $http2:$http3 $version_http {
     ":" "old";
     ".+:$" $http2;
     "^:.+" $http3;
-    default "old"
+    default "old";
 }
 
 map $ssl_alpn_protocol $ssl_alpn_protocol_map {
