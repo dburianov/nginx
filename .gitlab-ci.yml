@@ -21,6 +21,9 @@ include:
 docker_borringssl_build:
     image: docker:latest
     stage: docker_borringssl
+    except:
+      changes:
+        - "README.md"
     services:
         - docker:dind
     script:
@@ -41,6 +44,9 @@ docker_borringssl_build:
 docker_quictls_build:
     image: docker:latest
     stage: docker_quictls
+    except:
+      changes:
+        - "README.md"
     services:
         - docker:dind
     script:
