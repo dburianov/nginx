@@ -36,8 +36,9 @@ Features: alt-svc AsynchDNS brotli HSTS HTTP3 HTTPS-proxy IPv6 Largefile NTLM NT
 0.8.1
 ```
 ### Nginx
+## Nginx with BorringSSL, only linux/amd64
 ```
-nginx version: nginx/1.25.1
+nginx version: nginx/1.25.2 (quic-boringssl)
 built with OpenSSL 1.1.1 (compatible; BoringSSL) (running with BoringSSL)
 TLS SNI support enabled
 configure arguments:
@@ -100,13 +101,79 @@ configure arguments:
   --build=quic-boringssl
   --with-http_v3_module
 ```
+## Nginx with QuickTLS, linux/amd64,linux/arm64/v8
+```
+nginx version: nginx/1.25.2 (quictls)
+built with OpenSSL 3.0.10+quic 1 Aug 2023
+TLS SNI support enabled
+configure arguments:
+  --http-client-body-temp-path=/tmp/nginx/client-body-temp
+  --http-proxy-temp-path=/tmp/nginx/proxy-temp
+  --http-fastcgi-temp-path=/tmp/nginx/fastcgi-temp
+  --http-uwsgi-temp-path=/tmp/nginx/uwsgi-temp
+  --http-scgi-temp-path=/tmp/nginx/scgi-temp
+  --with-http_xslt_module
+  --with-http_ssl_module
+  --with-http_mp4_module
+  --with-http_flv_module
+  --with-http_secure_link_module
+  --with-http_dav_module
+  --with-http_auth_request_module
+  --with-compat
+  --with-http_geoip_module
+  --with-http_image_filter_module
+  --with-mail
+  --with-mail_ssl_module
+  --with-google_perftools_module
+  --with-debug
+  --with-pcre-jit
+  --without-pcre2
+  --with-ipv6
+  --with-http_stub_status_module
+  --with-http_realip_module
+  --with-http_addition_module
+  --with-http_gzip_static_module
+  --with-http_sub_module
+  --with-stream
+  --with-stream_geoip_module
+  --with-stream_realip_module
+  --with-stream_ssl_module
+  --with-stream_ssl_preread_module
+  --with-http_random_index_module
+  --with-http_gunzip_module
+  --with-http_v2_module
+  --with-http_slice_module
+  --add-module=/usr/src/nginx_upstream_check_module
+  --add-module=/usr/src/nginx-rtmp-module
+  --add-module=/usr/src/ngx_devel_kit
+  --add-module=/usr/src/lua-nginx-module
+  --add-module=/usr/src/echo-nginx-module
+  --add-module=/usr/src/nginx-ts-module
+  --add-module=/usr/src/nginx-module-vts
+  --add-module=/usr/src/nginx-module-stream-sts
+  --add-module=/usr/src/nginx-module-sts
+  --add-module=/usr/src/nginx-vod-module
+  --add-module=/usr/src/njs/nginx
+  --add-module=/usr/src/ModSecurity-nginx
+  --add-module=/usr/src/headers-more-nginx-module
+  --add-module=/usr/src/lua-upstream-nginx-module
+  --add-module=/usr/src/status-nginx-module
+  --add-module=/usr/src/ngx_brotli
+  --add-module=/usr/src/set-misc-nginx-module
+  --add-module=/usr/src/ngx_http_proxy_connect_module
+  --with-cc-opt=-I/usr/src/ssl/include
+  --with-ld-opt=-L/usr/src/ssl/lib
+  --with-openssl=/usr/src/openssl
+  --build=quictls
+  --with-http_v3_module
+```
 ### OS
 ```
 Ubuntu 22.04.3 LTS (Jammy Jellyfish)
 ```
-### GeoIP.dat
+### GeoIP
 ```
-from 21 June 2023 https://mailfud.org/geoip-legacy/
+from 6 September 2023 https://mailfud.org/geoip-legacy/
 ```
 ### Usage
 ```bash
@@ -123,10 +190,22 @@ sudo docker run \
   dburianov/nginx-aio:buildx-latest
 ```
 ### Build
+## nginx+borringssl
 ```bash
 tag=$(date +%Y%m%d%H%M)
 sudo docker buildx build --push \
   --platform linux/amd64,linux/arm64/v8 \
   --tag nginx-aio:buildx-latest \
-  --tag nginx-aio:buildx-$tag .
+  --tag nginx-aio:buildx-$tag \
+  .
+```
+## nginx+borringssl
+```bash
+tag=$(date +%Y%m%d%H%M)
+sudo docker buildx build --push \
+  --platform linux/amd64,linux/arm64/v8 \
+  --tag nginx-aio:buildx-latest \
+  --tag nginx-aio:buildx-$tag \
+  -f Dockerfile.quictls \
+  .
 ```
