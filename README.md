@@ -1,16 +1,16 @@
 
 [![pipeline status](https://gitlab.com/burianov/nginx-aio/badges/main/pipeline.svg)](https://gitlab.com/burianov/nginx-aio/-/commits/main)[![coverage report](https://gitlab.com/burianov/nginx-aio/badges/main/coverage.svg)](https://gitlab.com/burianov/nginx-aio/-/commits/main)[![Latest Release](https://gitlab.com/burianov/nginx-aio/-/badges/release.svg)](https://gitlab.com/burianov/nginx-aio/-/releases)
-### Custom Nginx build with static modules
-### ModSecurity rules
+## Custom Nginx build with static modules
+## ModSecurity rules
 ```
 GHA build v4.0/dev
 4 September 2023
 ```
-### ModSecurity
+## ModSecurity
 ```
 ModSecurity-nginx v1.0.3 (rules loaded inline/local/remote: 0/820/0)
 ```
-### OpenSSL
+## OpenSSL
 ```
 OpenSSL 3.2.0-dev  (Library: OpenSSL 3.2.0-dev )
 compiler: gcc -fPIC -pthread -m64 -Wa,--noexecstack -Wall -O3 -DOPENSSL_USE_NODELETE -DL_ENDIAN -DOPENSSL_PIC -DOPENSSL_BUILDING_OPENSSL -DZLIB -DNDEBUG
@@ -25,18 +25,18 @@ Providers:
     version: 3.2.0
     status: active
 ```
-### cURL
+## cURL
 ```
 curl 8.3.0-DEV (x86_64-pc-linux-gnu) libcurl/8.3.0-DEV BoringSSL brotli/1.0.9 quiche/0.18.0
 Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
 Features: alt-svc AsynchDNS brotli HSTS HTTP3 HTTPS-proxy IPv6 Largefile NTLM NTLM_WB SSL threadsafe UnixSockets
 ```
-### njs
+## njs
 ```
 0.8.1
 ```
-### Nginx
-## Nginx with BorringSSL, only linux/amd64
+## Nginx
+### Nginx with BorringSSL, only linux/amd64
 ```
 nginx version: nginx/1.25.2 (quic-boringssl)
 built with OpenSSL 1.1.1 (compatible; BoringSSL) (running with BoringSSL)
@@ -101,7 +101,7 @@ configure arguments:
   --build=quic-boringssl
   --with-http_v3_module
 ```
-## Nginx with QuickTLS, linux/amd64,linux/arm64/v8
+### Nginx with QuickTLS, linux/amd64,linux/arm64/v8
 ```
 nginx version: nginx/1.25.2 (quictls)
 built with OpenSSL 3.0.10+quic 1 Aug 2023
@@ -167,15 +167,15 @@ configure arguments:
   --build=quictls
   --with-http_v3_module
 ```
-### OS
+## OS
 ```
 Ubuntu 22.04.3 LTS (Jammy Jellyfish)
 ```
-### GeoIP
+## GeoIP
 ```
 from 6 September 2023 https://mailfud.org/geoip-legacy/
 ```
-### Usage
+## Usage
 ```bash
 sudo docker run \
   -d \
@@ -189,8 +189,8 @@ sudo docker run \
   -v /etc/letsencrypt/live/server_name/privkey.pem:/usr/local/nginx/conf/ssl/server_name/privkey.pem:ro \
   dburianov/nginx-aio:buildx-latest
 ```
-### Build
-## nginx+borringssl
+## Build
+### nginx+borringssl
 ```bash
 tag=$(date +%Y%m%d%H%M)
 sudo docker buildx build --push \
@@ -199,7 +199,7 @@ sudo docker buildx build --push \
   --tag nginx-aio:buildx-$tag \
   .
 ```
-## nginx+borringssl
+### nginx+borringssl
 ```bash
 tag=$(date +%Y%m%d%H%M)
 sudo docker buildx build --push \
