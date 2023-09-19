@@ -8,9 +8,10 @@ GHA build v4.0/dev
 ```
 ## ModSecurity
 ```
-ModSecurity-nginx v1.0.3 (rules loaded inline/local/remote: 0/820/0)
+ModSecurity-nginx v1.0.3 (rules loaded inline/local/remote: 0/825/0)
 ```
 ## OpenSSL
+### linux/amd64
 ```
 OpenSSL 3.2.0-dev  (Library: OpenSSL 3.2.0-dev )
 compiler: gcc -fPIC -pthread -m64 -Wa,--noexecstack -Wall -O3 -DOPENSSL_USE_NODELETE -DL_ENDIAN -DOPENSSL_PIC -DOPENSSL_BUILDING_OPENSSL -DZLIB -DNDEBUG
@@ -25,9 +26,34 @@ Providers:
     version: 3.2.0
     status: active
 ```
+### linux/arm64/v8
+```
+OpenSSL 3.2.0-dev  (Library: OpenSSL 3.2.0-dev )
+built on: Thu Sep  7 04:02:10 2023 UTC
+platform: linux-aarch64
+options:  bn(64,64)
+compiler: gcc -fPIC -pthread -Wa,--noexecstack -Wall -O3 -DOPENSSL_USE_NODELETE -DOPENSSL_PIC -DOPENSSL_BUILDING_OPENSSL -DZLIB -DNDEBUG
+OPENSSLDIR: "/usr/local/ssl"
+ENGINESDIR: "/usr/local/ssl/lib/engines-3"
+MODULESDIR: "/usr/local/ssl/lib/ossl-modules"
+Seeding source: os-specific
+CPUINFO: OPENSSL_armcap=0x81
+Providers:
+  default
+    name: OpenSSL Default Provider
+    version: 3.2.0
+    status: active
+```
 ## cURL
+### linux/amd64
 ```
 curl 8.3.0-DEV (x86_64-pc-linux-gnu) libcurl/8.3.0-DEV BoringSSL brotli/1.0.9 quiche/0.18.0
+Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
+Features: alt-svc AsynchDNS brotli HSTS HTTP3 HTTPS-proxy IPv6 Largefile NTLM NTLM_WB SSL threadsafe UnixSockets
+```
+### linux/arm64/v8
+```
+curl 8.3.0-DEV (aarch64-unknown-linux-gnu) libcurl/8.3.0-DEV BoringSSL brotli/1.0.9 quiche/0.18.0
 Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
 Features: alt-svc AsynchDNS brotli HSTS HTTP3 HTTPS-proxy IPv6 Largefile NTLM NTLM_WB SSL threadsafe UnixSockets
 ```
