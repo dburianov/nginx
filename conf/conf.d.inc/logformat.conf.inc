@@ -78,7 +78,7 @@ log_format logs_json_v2_0 escape=json
     '"http_x_forwarded_for":"$http_x_forwarded_for_map",'
     '"http_referer":"$http_referer_map",'
     '"http_user_agent":"$http_user_agent_map",'
-    '"http_host":"$http_Host",'
+    '"http_host":"$http_host",'
     '"http_range":"$http_range_map"'
   '},'
   '"request":{'
