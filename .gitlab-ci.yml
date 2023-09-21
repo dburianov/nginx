@@ -25,6 +25,13 @@ docker_borringssl_build:
       changes:
         - "README.md"
         - ".gitlab-ci.yml"
+    only:
+      refs:
+        - master
+      variables:
+        - $CI_COMMIT_MESSAGE =~ /^Release .*$/
+        - $CI_COMMIT_MESSAGE =~ /^(feat|fix).+ Borringssl .*/
+        - $CI_PIPELINE_SOURCE == "schedule"
     services:
         - docker:dind
     script:
@@ -49,6 +56,13 @@ docker_quictls_build:
       changes:
         - "README.md"
         - ".gitlab-ci.yml"
+    only:
+      refs:
+        - master
+      variables:
+        - $CI_COMMIT_MESSAGE =~ /^Release .*$/
+        - $CI_COMMIT_MESSAGE =~ /^(feat|fix).+ Quictls .*/
+        - $CI_PIPELINE_SOURCE == "schedule"
     services:
         - docker:dind
     script:
