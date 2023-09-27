@@ -28,6 +28,7 @@ docker_borringssl_build:
     only:
       refs:
         - master
+        - main
       variables:
         - $CI_COMMIT_MESSAGE =~ /^Release .*$/
         - $CI_COMMIT_MESSAGE =~ /^(feat|fix).+ Borringssl .*/
@@ -59,6 +60,7 @@ docker_quictls_build:
     only:
       refs:
         - master
+        - main
       variables:
         - $CI_COMMIT_MESSAGE =~ /^Release .*$/
         - $CI_COMMIT_MESSAGE =~ /^(feat|fix).+ Quictls .*/
