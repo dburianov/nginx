@@ -110,13 +110,6 @@ map $ssl_session_reused $ssl_session_reused_map {
     default $ssl_session_reused;
 }
 
-map $time_iso8601 $time_iso8601_p1 {
-    ~([^+]+) $1;
+map "$time_iso8601:$msec" $time_iso8601_with_ms {
+   ~(.*)\+(\d+:\d+):\d+\.(\d+)$ $1.$3+$2;
 }
-map $time_iso8601 $time_iso8601_p2 {
-    ~\+([0-9:]+)$ $1;
-}
-map $msec $millisec {
-    ~\.([0-9]+)$ $1;
-}
-

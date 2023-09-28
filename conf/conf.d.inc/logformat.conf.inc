@@ -122,7 +122,7 @@ log_format logs_json_v2_1 escape=json
   '"time_local":"$time_local",'
   '"time_iso8601":"$time_iso8601",'
   '"time_msec":"$msec",'
-  '"timestamp":"$time_iso8601_p1.$millisec+$time_iso8601_p2",'
+  '"time_iso8601_ms":"$time_iso8601_with_ms",'
   '"server_addr":"$server_addr",'
   '"remote":{'
     '"remote_addr":"$remote_addr",'
