@@ -21,18 +21,18 @@ include:
 docker_borringssl_build:
     image: docker:latest
     stage: docker_borringssl
-    except:
-      changes:
-        - "README.md"
-        - ".gitlab-ci.yml"
+#    except:
+#      changes:
+#        - "README.md"
+#        - ".gitlab-ci.yml"
     only:
       refs:
         - master
         - main
-      variables:
-        - $CI_COMMIT_MESSAGE =~ /^Release .*$/
-        - $CI_COMMIT_MESSAGE =~ /^(feat|fix).+ Borringssl .*/
-        - $CI_PIPELINE_SOURCE == "schedule"
+#      variables:
+#        - $CI_COMMIT_MESSAGE =~ /^Release .*$/
+#        - $CI_COMMIT_MESSAGE =~ /^(feat|fix).+ Borringssl .*/
+#        - $CI_PIPELINE_SOURCE == "schedule"
     services:
         - docker:dind
     script:
@@ -53,18 +53,18 @@ docker_borringssl_build:
 docker_quictls_build:
     image: docker:latest
     stage: docker_quictls
-    except:
-      changes:
-        - "README.md"
-        - ".gitlab-ci.yml"
+#    except:
+#      changes:
+#        - "README.md"
+#        - ".gitlab-ci.yml"
     only:
       refs:
         - master
         - main
-      variables:
-        - $CI_COMMIT_MESSAGE =~ /^Release .*$/
-        - $CI_COMMIT_MESSAGE =~ /^(feat|fix).+ Quictls .*/
-        - $CI_PIPELINE_SOURCE == "schedule"
+#      variables:
+#        - $CI_COMMIT_MESSAGE =~ /^Release .*$/
+#        - $CI_COMMIT_MESSAGE =~ /^(feat|fix).+ Quictls .*/
+#        - $CI_PIPELINE_SOURCE == "schedule"
     services:
         - docker:dind
     script:
