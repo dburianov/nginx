@@ -147,6 +147,7 @@ RUN <<EOT
     curl -s -o /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-resolver_conf_parsing.patch
     curl -s -o /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-reuseport_close_unused_fds.patch
     curl -s -o /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-log_escape_non_ascii.patch
+    curl -sL -o /usr/src/nginx/Enable_BoringSSL_OCSP.patch https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch
 EOT
 
 RUN <<EOT
@@ -161,6 +162,7 @@ RUN <<EOT
     patch -p1 < /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch
     patch -p1 < /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch
     patch -p1 < /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch
+    patch -p1 < /usr/src/nginx/Enable_BoringSSL_OCSP.patch
 EOT
 
 RUN <<EOT

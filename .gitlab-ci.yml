@@ -47,6 +47,7 @@ docker_borringssl_build:
           --tag dburianov/nginx-aio:buildx-$tag
           --push
           --progress plain
+          -f Dockerfile.boringssl
           .
         - docker logout
 
