@@ -1,0 +1,3 @@
+FROM scratch AS modsecurity
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ADD modsecurity /usr/local/modsecurity

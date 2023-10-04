@@ -325,6 +325,7 @@ FROM dburianov/ubuntu:geoip-latest AS geoip
 FROM dburianov/ubuntu:curl-latest AS curl
 FROM dburianov/ubuntu:openssl-latest AS openssl
 FROM ubuntu_core AS nginx-release
+FROM dburianov/nginx-aio:modsecurity_rules-latest AS modsecurity_rules
 
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 ARG CACHEBUST=0
@@ -345,6 +346,7 @@ RUN <<EOT
 EOT
 
 COPY --from=ubuntu-build /usr/local /usr/local/
+COPY --from=modsecurity_rules /usr/local/modsecurity /usr/local/modsecurity
 COPY --from=ubuntu-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecurity/unicode.mapping
 COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
 COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
@@ -357,7 +359,6 @@ COPY --from=openssl /usr/local/ssl/ /usr/local/ssl/
 ADD docker-entrypoint.sh /docker-entrypoint.sh
 ADD conf /usr/local/nginx/conf.docker
 ADD lua /usr/local/nginx/lua.docker
-ADD modsecurity /usr/local/modsecurity
 ADD dhparams* /usr/local/nginx/conf.docker/ssl.dh/
 RUN <<EOT
     echo "Configuring libs and copy default configs"
