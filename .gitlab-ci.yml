@@ -6,6 +6,7 @@ stages:
 - docker_modsecurity
 - docker_borringssl
 - docker_quictls
+- docker_config
 
 variables:
     IMAGE_LATEST: dburianov/nginx-aio:latest
@@ -110,5 +111,61 @@ docker_quictls_build:
           --push
           --progress plain
           -f Dockerfile.quictls
+          .
+        - docker logout
+
+docker_quictls_config_build:
+    image: docker:latest
+    stage: docker_config
+    except:
+      changes:
+        - "README.md"
+    only:
+      refs:
+        - master
+        - main
+      variables:
+        - "$CI_COMMIT_MESSAGE =~ /^Config: .+$/"
+    services:
+        - docker:dind
+    script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+        - docker buildx create --use
+        - tag=$(date +%Y%m%d%H%M)
+        - docker buildx build
+          --platform linux/amd64
+          --tag dburianov/nginx-aio:quictls-latest
+          --tag dburianov/nginx-aio:quictls-$tag
+          --push
+          --progress plain
+          -f Dockerfile.quictls.config
+          .
+        - docker logout
+
+docker_borringssl_config_build:
+    image: docker:latest
+    stage: docker_config
+    except:
+      changes:
+        - "README.md"
+    only:
+      refs:
+        - master
+        - main
+      variables:
+        - "$CI_COMMIT_MESSAGE =~ /^Config: .+$/"
+    services:
+        - docker:dind
+    script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+        - docker buildx create --use
+        - tag=$(date +%Y%m%d%H%M)
+        - docker buildx build
+          --platform linux/amd64
+          --tag dburianov/nginx-aio:borringssl-latest
+          --tag dburianov/nginx-aio:borringssl-$tag
+          --push
+          --progress plain
+          -f Dockerfile.borringssl.config
           .
         - docker logout
