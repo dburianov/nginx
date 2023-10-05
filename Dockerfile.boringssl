@@ -321,10 +321,10 @@ RUN <<EOT
     rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
 EOT
 
-FROM dburianov/nginx-aio:modsecurity_rules-latest AS modsecurity_rules
-FROM dburianov/ubuntu:geoip-latest AS geoip
-FROM dburianov/ubuntu:curl-latest AS curl
-FROM dburianov/ubuntu:openssl-latest AS openssl
+FROM dburianov/modsecurity_rules:latest AS modsecurity_rules
+FROM dburianov/geoip:latest AS geoip
+FROM dburianov/curl:latest AS curl
+FROM dburianov/openssl:latest AS openssl
 FROM ubuntu_core AS nginx-release
 
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"

@@ -47,9 +47,9 @@ Providers:
 ## cURL
 ### linux/amd64
 ```
-curl 8.3.0-DEV (x86_64-pc-linux-gnu) libcurl/8.3.0-DEV BoringSSL brotli/1.0.9 quiche/0.18.0
-Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
-Features: alt-svc AsynchDNS brotli HSTS HTTP3 HTTPS-proxy IPv6 Largefile NTLM NTLM_WB SSL threadsafe UnixSockets
+curl 8.4.0-DEV (x86_64-pc-linux-gnu) libcurl/8.4.0-DEV OpenSSL/3.0.10 zlib/1.2.11 brotli/1.0.9 zstd/1.4.8 c-ares/1.18.1 libidn2/2.3.2 libpsl/0.21.0 (+libidn2/2.3.2) libssh2/1.10.0 nghttp2/1.56.0 ngtcp2/0.19.1 nghttp3/0.15.0 librtmp/2.3 OpenLDAP/2.5.16
+Protocols: dict file ftp ftps gopher gophers http https imap imaps ldap ldaps mqtt pop3 pop3s rtmp rtsp scp sftp smb smbs smtp smtps telnet tftp
+Features: alt-svc AsynchDNS brotli HSTS HTTP2 HTTP3 HTTPS-proxy IDN IPv6 Largefile libz NTLM PSL SSL threadsafe TLS-SRP UnixSockets zstd
 ```
 ### linux/arm64/v8
 ```
