@@ -125,7 +125,7 @@ docker_quictls_config_build:
         - master
         - main
       variables:
-        - "$CI_COMMIT_MESSAGE =~ /^Config: .+$/"
+        - "$CI_COMMIT_MESSAGE =~ /^Config: .+/"
     services:
         - docker:dind
     script:
@@ -153,7 +153,7 @@ docker_borringssl_config_build:
         - master
         - main
       variables:
-        - "$CI_COMMIT_MESSAGE =~ /^Config: .+$/"
+        - "$CI_COMMIT_MESSAGE =~ /^Config: .+/"
     services:
         - docker:dind
     script:
