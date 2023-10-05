@@ -2,7 +2,7 @@ ARG RESTY_IMAGE_BASE="ubuntu"
 ARG RESTY_IMAGE_TAG="jammy"
 
 #FROM ${RESTY_IMAGE_BASE}:${RESTY_IMAGE_TAG} AS ubuntu_core
-FROM dburianov/ubuntu:buildx-latest AS ubuntu_core
+FROM dburianov/ubuntu:latest AS ubuntu_core
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 ENV DEBIAN_FRONTEND noninteractive
 ENV TZ=Europe/London
