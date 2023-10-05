@@ -4,7 +4,7 @@ services:
 stages:
 - test
 - docker_modsecurity
-- docker_borringssl
+- docker_boringssl
 - docker_quictls
 - docker_config
 
@@ -50,9 +50,9 @@ docker_modsecurity_build:
           .
         - docker logout
 
-docker_borringssl_build:
+docker_boringssl_build:
     image: docker:latest
-    stage: docker_borringssl
+    stage: docker_boringssl
     except:
       changes:
         - "README.md"
@@ -74,7 +74,7 @@ docker_borringssl_build:
         - docker buildx build
           --platform linux/amd64
           --tag dburianov/nginx-aio:latest
-          --tag dburianov/nginx-aio:borringssl-latest
+          --tag dburianov/nginx-aio:boringssl-latest
           --tag dburianov/nginx-aio:buildx-latest
           --tag dburianov/nginx-aio:buildx-$tag
           --push
@@ -142,7 +142,7 @@ docker_quictls_config_build:
           .
         - docker logout
 
-docker_borringssl_config_build:
+docker_boringssl_config_build:
     image: docker:latest
     stage: docker_config
     except:
@@ -162,10 +162,10 @@ docker_borringssl_config_build:
         - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
           --platform linux/amd64
-          --tag dburianov/nginx-aio:borringssl-latest
-          --tag dburianov/nginx-aio:borringssl-$tag
+          --tag dburianov/nginx-aio:boringssl-latest
+          --tag dburianov/nginx-aio:boringssl-$tag
           --push
           --progress plain
-          -f Dockerfile.borringssl.config
+          -f Dockerfile.boringssl.config
           .
         - docker logout
