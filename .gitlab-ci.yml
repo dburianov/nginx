@@ -3,6 +3,7 @@ services:
   - "docker:dind"
 stages:
 - test
+- setvars
 - docker_modsecurity
 - docker_boringssl
 - docker_quictls
@@ -19,6 +20,14 @@ sast:
   stage: test
 include:
 - template: Security/SAST.gitlab-ci.yml
+
+setvars-job:
+  stage: setvars
+  script:
+    - echo "BUILD_TAG=$(date +%Y%m%d.%H%M)" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
 
 docker_modsecurity_build:
     image: docker:latest
@@ -39,11 +48,10 @@ docker_modsecurity_build:
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx create --use
-        - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
           --platform linux/amd64,linux/arm64/v8
           --tag dburianov/modsecurity_rules:latest
-          --tag dburianov/modsecurity_rules:$tag
+          --tag dburianov/modsecurity_rules:$BUILD_TAG
           --push
           --progress plain
           -f Dockerfile.modsecutity_rules
@@ -70,13 +78,12 @@ docker_boringssl_build:
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx create --use
-        - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
           --platform linux/amd64
           --tag dburianov/nginx-aio:latest
           --tag dburianov/nginx-aio:boringssl-latest
           --tag dburianov/nginx-aio:buildx-latest
-          --tag dburianov/nginx-aio:buildx-$tag
+          --tag dburianov/nginx-aio:buildx-$BUILD_TAG
           --push
           --progress plain
           -f Dockerfile.boringssl
@@ -103,11 +110,10 @@ docker_quictls_build:
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx create --use
-        - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
           --platform linux/amd64
           --tag dburianov/nginx-aio:quictls-latest
-          --tag dburianov/nginx-aio:quictls-$tag
+          --tag dburianov/nginx-aio:quictls-$BUILD_TAG
           --push
           --progress plain
           -f Dockerfile.quictls
@@ -131,11 +137,10 @@ docker_quictls_config_build:
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx create --use
-        - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
           --platform linux/amd64
           --tag dburianov/nginx-aio:quictls-latest
-          --tag dburianov/nginx-aio:quictls-$tag
+          --tag dburianov/nginx-aio:quictls-$BUILD_TAG
           --push
           --progress plain
           -f Dockerfile.quictls.config
@@ -159,11 +164,10 @@ docker_boringssl_config_build:
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx create --use
-        - tag=$(date +%Y%m%d%H%M)
         - docker buildx build
           --platform linux/amd64
           --tag dburianov/nginx-aio:boringssl-latest
-          --tag dburianov/nginx-aio:boringssl-$tag
+          --tag dburianov/nginx-aio:boringssl-$BUILD_TAG
           --push
           --progress plain
           -f Dockerfile.boringssl.config
