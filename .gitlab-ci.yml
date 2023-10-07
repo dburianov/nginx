@@ -8,6 +8,7 @@ stages:
 - docker_boringssl
 - docker_quictls
 - docker_config
+- docker_nginx_test
 
 variables:
     IMAGE_LATEST: dburianov/nginx-aio:latest
@@ -173,3 +174,41 @@ docker_boringssl_config_build:
           -f Dockerfile.boringssl.config
           .
         - docker logout
+
+docker_nginx_test:
+    image: docker:latest
+    stage: docker_nginx_test
+    except:
+      changes:
+        - "README.md"
+#        - ".gitlab-ci.yml"
+    only:
+      refs:
+        - master
+        - main
+      variables:
+        - "$CI_COMMIT_MESSAGE =~ /^test: .+/"
+    services:
+        - docker:dind
+    script:
+        - docker buildx create --use
+        - docker buildx build
+          --platform linux/amd64
+          --tag nginx_test
+          --load
+          --progress plain
+          -f Dockerfile.test
+          --build-arg IMAGE=dburianov/nginx-aio:quictls-latest
+          .
+        - docker buildx rmi $(docker images -q) || exit 0
+        - docker buildx build
+          --platform linux/amd64
+          --tag nginx_test
+          --load
+          --progress plain
+          -f Dockerfile.test
+          --build-arg IMAGE=dburianov/nginx-aio:boringssl-latest
+          .
+        - docker buildx prune
+        - docker buildx rm
+        - docker buildx rmi $(docker images -q) || exit 0
