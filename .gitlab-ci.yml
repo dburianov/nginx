@@ -41,7 +41,7 @@ docker_modsecurity_build:
         - master
         - main
       variables:
-        - $CI_COMMIT_MESSAGE =~ /^Release .+/"
+        - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
         - $CI_PIPELINE_SOURCE == "schedule"
     services:
@@ -71,7 +71,7 @@ docker_boringssl_build:
         - master
         - main
       variables:
-        - $CI_COMMIT_MESSAGE =~ /^Release .+/"
+        - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
         - $CI_PIPELINE_SOURCE == "schedule"
     services:
@@ -103,7 +103,7 @@ docker_quictls_build:
         - master
         - main
       variables:
-        - $CI_COMMIT_MESSAGE =~ /^Release .+/"
+        - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
         - $CI_PIPELINE_SOURCE == "schedule"
     services:
@@ -188,7 +188,7 @@ docker_nginx_test:
         - main
       variables:
         - $CI_PIPELINE_SOURCE == "schedule"
-        - $CI_COMMIT_MESSAGE =~ /^Release .+/"
+        - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^test: .+/"
     services:
         - docker:dind
