@@ -191,6 +191,7 @@ echo "worker_processes $ncpu;" | tee $NGINX_INC_FOLDER/worker_processes.conf.inc
 
 echo "PATH=/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH" >> ~/.bashrc
 export PATH="/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH"
+export LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
 
 # generate ticket.key
 openssl rand 80 > /tmp/nginx/ticket.key
