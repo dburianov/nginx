@@ -200,7 +200,7 @@ docker_nginx_test:
           -f Dockerfile.test
           --build-arg IMAGE=dburianov/nginx-aio:quictls-latest
           .
-        - docker buildx rmi $(docker images -q) || exit 0
+        - docker rmi $(docker images -q) || exit 0
         - docker buildx build
           --platform linux/amd64
           --tag nginx_test
@@ -211,4 +211,4 @@ docker_nginx_test:
           .
         - docker buildx prune
         - docker buildx rm
-        - docker buildx rmi $(docker images -q) || exit 0
+        - docker rmi $(docker images -q) || exit 0
