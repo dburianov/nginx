@@ -187,6 +187,8 @@ docker_nginx_test:
         - master
         - main
       variables:
+        - $CI_PIPELINE_SOURCE == "schedule"
+        - $CI_COMMIT_MESSAGE =~ /^Release .*$/
         - "$CI_COMMIT_MESSAGE =~ /^test: .+/"
     services:
         - docker:dind
@@ -200,7 +202,6 @@ docker_nginx_test:
           -f Dockerfile.test
           --build-arg IMAGE=dburianov/nginx-aio:quictls-latest
           .
-        - docker rmi $(docker images -q) || exit 0
         - docker buildx build
           --platform linux/amd64
           --tag nginx_test
