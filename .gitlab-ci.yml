@@ -83,8 +83,6 @@ docker_boringssl_build:
           --platform linux/amd64
           --tag dburianov/nginx-aio:latest
           --tag dburianov/nginx-aio:boringssl-latest
-          --tag dburianov/nginx-aio:buildx-latest
-          --tag dburianov/nginx-aio:buildx-$BUILD_TAG
           --push
           --progress plain
           -f Dockerfile.boringssl
