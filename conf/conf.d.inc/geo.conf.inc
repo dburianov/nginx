@@ -18,7 +18,7 @@ geo $blacklist {
 #    return 489;
 #}
 # Drop method
-#if ( $request_method !~ ^(GET|HEAD)$ ) {                                  
+#if ( $request_method !~ ^(GET|HEAD)$ ) {
 ##    add_header X-301 badmethod;
 #    return 490;
 #}

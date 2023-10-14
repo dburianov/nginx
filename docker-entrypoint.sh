@@ -193,18 +193,9 @@ echo "PATH=/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH" >
 export PATH="/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH"
 export LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
 
-# generate ticket.key
-openssl rand 80 > /tmp/nginx/ticket.key
 
-openssl version -a
-openssl list -providers
-curl --version
 
 # test env
-env | sort
 #echo -n "njs version is: "
-/usr/local/bin/njs -v
-/usr/local/nginx/sbin/nginx -V
-/usr/local/nginx/sbin/nginx -t
 
 exec "$@"

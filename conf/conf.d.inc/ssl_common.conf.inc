@@ -2,7 +2,7 @@ ssl_session_timeout 1d;
 ssl_session_cache shared:TLS:10m;  # about 40000 sessions
 
 #ssl_session_tickets off;
-ssl_session_tickets on;
+ssl_session_tickets off;
 
 ssl_dhparam /usr/local/nginx/conf.docker/ssl.dh/dhparams4096.pem;
 
@@ -20,7 +20,6 @@ ssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECD
 #ssl_buffer_size 4k;
 
 #openssl rand 80 > ticket.key
-ssl_session_ticket_key /tmp/nginx/ticket.key;
 
 # OCSP stapling
 ssl_stapling on;
@@ -30,11 +29,12 @@ ssl_stapling_verify on;
 # ssl_trusted_certificate /certs/dir/chain.pem;
 # ssl_trusted_certificate /etc/nginx/ssl/fullchain.pem;
 
-#Due to usage of BoringSSL instead of OpenSSL, some directives may not work, e.g. ssl_conf_command.
-#Besides, direct OCSP stapling via ssl_stapling on; ssl_stapling_verify on; does not work too.
-#You should use ssl_stapling on; ssl_stapling_file /path/to/ocsp;.
-#The OCSP file can be generated via
-#openssl ocsp -no_nonce -issuer /path/to/intermediate -cert /path/to/cert -url "$(openssl x509 -in /path/to/cert -noout -ocsp_uri)" -respout /path/to/ocsp.
+# Due to usage of BoringSSL instead of OpenSSL, some directives may not work, e.g. ssl_conf_command.
+# Besides, direct OCSP stapling via ssl_stapling on; ssl_stapling_verify on; does not work too.
+# You should use ssl_stapling on; ssl_stapling_file /path/to/ocsp;.
+# The OCSP file can be generated via
+# openssl ocsp -no_nonce -issuer /path/to/intermediate -cert /path/to/cert -url "$(openssl x509 \
+#   -in /path/to/cert -noout -ocsp_uri)" -respout /path/to/ocsp.
 
 #resolver 1.1.1.1 1.0.0.1 8.8.8.8 4.4.4.4 [2606:4700:4700::1111] [2606:4700:4700::1001]; # Cloudflare
 
@@ -48,9 +48,9 @@ more_set_headers -t 'text/html' 'x-xss-protection: 1; mode=block';
 
 ## Content-Security-Policy (CSP): Yes
 ## No 'script-src' directive, you need to test it yourself
-#add_header Content-Security-Policy "object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; frame-ancestors 'self';";
+# add_header Content-Security-Policy "object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; frame-ancestors 'self';";
 ## The safest CSP, only block your website to be inside an inframe
-#add_header Content-Security-Policy "frame-ancestors 'self';";
+# add_header Content-Security-Policy "frame-ancestors 'self';";
 
 # Enable HSTS
 #add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";

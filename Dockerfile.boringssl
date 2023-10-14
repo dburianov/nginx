@@ -1,7 +1,3 @@
-ARG RESTY_IMAGE_BASE="ubuntu"
-ARG RESTY_IMAGE_TAG="jammy"
-
-#FROM ${RESTY_IMAGE_BASE}:${RESTY_IMAGE_TAG} AS ubuntu_core
 FROM dburianov/ubuntu:latest AS ubuntu_core
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 ENV DEBIAN_FRONTEND noninteractive
@@ -144,9 +140,9 @@ RUN <<EOT
     cd /usr/src/ngx_brotli
     git submodule update --init
     echo "Get Openresty patches for Nginx"
-    curl -s -o /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-resolver_conf_parsing.patch
-    curl -s -o /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-reuseport_close_unused_fds.patch
-    curl -s -o /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-log_escape_non_ascii.patch
+    curl -s -o /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-resolver_conf_parsing.patch
+    curl -s -o /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-reuseport_close_unused_fds.patch
+    curl -s -o /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-log_escape_non_ascii.patch
     curl -sL -o /usr/src/nginx/Enable_BoringSSL_OCSP.patch https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch
 EOT
 
@@ -159,9 +155,9 @@ RUN <<EOT
     echo "Apply nngx_http_proxy_connect_module patch"
     patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch
     echo "Apply patch from Openresty"
-    patch -p1 < /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch
-    patch -p1 < /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch
-    patch -p1 < /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch
     patch -p1 < /usr/src/nginx/Enable_BoringSSL_OCSP.patch
 EOT
 

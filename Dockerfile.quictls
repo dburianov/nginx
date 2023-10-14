@@ -1,7 +1,3 @@
-ARG RESTY_IMAGE_BASE="ubuntu"
-ARG RESTY_IMAGE_TAG="jammy"
-
-#FROM ${RESTY_IMAGE_BASE}:${RESTY_IMAGE_TAG} AS ubuntu_core
 FROM dburianov/ubuntu:latest AS ubuntu_core
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 ENV DEBIAN_FRONTEND noninteractive
@@ -138,9 +134,9 @@ RUN <<EOT
     cd /usr/src/ngx_brotli
     git submodule update --init
     echo "Get Openresty patches for Nginx"
-    curl -s -o /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-resolver_conf_parsing.patch
-    curl -s -o /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-reuseport_close_unused_fds.patch
-    curl -s -o /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.23.0-log_escape_non_ascii.patch
+    curl -s -o /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-resolver_conf_parsing.patch
+    curl -s -o /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-reuseport_close_unused_fds.patch
+    curl -s -o /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-log_escape_non_ascii.patch
 EOT
 
 RUN <<EOT
@@ -152,9 +148,9 @@ patch -p1 < /usr/src/nginx_upstream_check_module/check_1.20.1+.patch
     echo "Apply nngx_http_proxy_connect_module patch"
 patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch
     echo "Apply patch from Openresty"
-patch -p1 < /usr/src/nginx/nginx-1.23.0-resolver_conf_parsing.patch
-patch -p1 < /usr/src/nginx/nginx-1.23.0-reuseport_close_unused_fds.patch
-patch -p1 < /usr/src/nginx/nginx-1.23.0-log_escape_non_ascii.patch
+patch -p1 < /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch
+patch -p1 < /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch
+patch -p1 < /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch
 EOT
 
 RUN <<EOT
@@ -345,7 +341,6 @@ COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
 COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
 COPY --from=geoip /geoip /usr/local/nginx/geoip
 COPY --from=curl /usr/local/curl/ /usr/local/curl/
-#COPY --from=curl /opt/quiche/target/release /opt/quiche/target/release
 COPY --from=curl /usr/local/bin/httpstat.sh /usr/local/bin/httpstat.sh
 COPY --from=openssl /usr/local/ssl/ /usr/local/ssl/
 
