@@ -119,7 +119,8 @@ RUN <<EOT
     ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib enable-quic
     make -j $(nproc) build_sw
     make install_sw
-    echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
+    echo "/usr/local/ssl/lib" > /etc/ld.so.conf.d/openssl.conf
+    echo "/usr/local/ssl/lib64" >> /etc/ld.so.conf.d/openssl.conf
     ldconfig -v
 EOT
 
