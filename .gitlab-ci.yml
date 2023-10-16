@@ -7,14 +7,16 @@ stages:
 - docker_modsecurity
 - docker_boringssl
 - docker_quictls
+- push
 - docker_config
 - docker_nginx_test
+- failed
 
 variables:
-    IMAGE_LATEST: dburianov/nginx-aio:latest
-    IMAGE_COMMIT: dburianov/nginx-aio:$CI_COMMIT_SHORT_SHA
+    IMAGE_LATEST: dburianov/nginx-aio:arm-64-latest
+    IMAGE_COMMIT: dburianov/nginx-aio:arm-64-$CI_COMMIT_SHORT_SHA
     CI: 'false'
-    DOCKER_HOST: "tcp://docker:2375"
+    #DOCKER_HOST: "tcp://docker:2375"
     DOCKER_TLS_CERTDIR: ""
 
 sast:
@@ -50,9 +52,9 @@ docker_modsecurity_build:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx create --use
         - docker buildx build
-          --platform linux/amd64,linux/arm64/v8
           --tag dburianov/modsecurity_rules:latest
           --tag dburianov/modsecurity_rules:$BUILD_TAG
+          --platform linux/amd64,linux/arm/v7,linux/arm64/v8,linux/arm/v8
           --push
           --progress plain
           -f Dockerfile.modsecutity_rules
@@ -65,7 +67,6 @@ docker_boringssl_build:
     except:
       changes:
         - "README.md"
-#        - ".gitlab-ci.yml"
     only:
       refs:
         - master
@@ -80,11 +81,12 @@ docker_boringssl_build:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx create --use
         - docker buildx build
-          --platform linux/amd64
           --tag dburianov/nginx-aio:latest
           --tag dburianov/nginx-aio:boringssl-latest
+          --tag dburianov/nginx-aio:$BUILD_TAG
           --push
           --progress plain
+          --platform linux/amd64
           -f Dockerfile.boringssl
           .
         - docker logout
@@ -95,7 +97,6 @@ docker_quictls_build:
     except:
       changes:
         - "README.md"
-#        - ".gitlab-ci.yml"
     only:
       refs:
         - master
@@ -107,17 +108,97 @@ docker_quictls_build:
     services:
         - docker:dind
     script:
-        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+        - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
         - docker buildx create --use
         - docker buildx build
-          --platform linux/amd64
-          --tag dburianov/nginx-aio:quictls-latest
-          --tag dburianov/nginx-aio:quictls-$BUILD_TAG
+          --tag $CI_MY_REGISTRY/burianov/nginx-aio:linux-amd64-quictls-latest
+          --tag $CI_MY_REGISTRY/burianov/nginx-aio:linux-amd64-quictls-$BUILD_TAG
           --push
           --progress plain
+         --platform linux/amd64
           -f Dockerfile.quictls
           .
         - docker logout
+
+docker_quictls_arm64_build:
+    image: docker:latest
+    stage: docker_quictls
+    tags:
+    - arm64
+    except:
+      changes:
+        - "README.md"
+    only:
+      refs:
+        - master
+        - main
+        - feat/arm64
+      variables:
+        - $CI_COMMIT_MESSAGE =~ /^Release .+/
+        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+        - $CI_PIPELINE_SOURCE == "schedule"
+    services:
+        - docker:dind
+    script:
+        - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
+        - docker buildx create --use
+        - docker buildx build
+          --tag $CI_MY_REGISTRY/burianov/nginx-aio:linux-arm64-v8-quictls-latest
+          --tag $CI_MY_REGISTRY/burianov/nginx-aio:linux-arm64-v8-quictls-$BUILD_TAG
+          --push
+          --progress plain
+         --platform linux/arm64/v8
+          -f Dockerfile.quictls
+          .
+        - docker logout
+
+docker_curl_push:
+    image: docker:latest
+    stage: push
+    except:
+      changes:
+        - "README.md"
+    only:
+      refs:
+        - master
+        - main
+#        - merge_requests
+      variables:
+        - $CI_COMMIT_MESSAGE =~ /^Release .+/
+        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
+        - $CI_PIPELINE_SOURCE == "schedule"
+    services:
+        - docker:dind
+    script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+        - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
+        - docker buildx create --use
+
+        - docker pull --platform linux/arm64/v8 $CI_MY_REGISTRY/burianov/nginx:linux-arm64-v8-quictls-latest
+        - docker pull --platform linux/arm64/v8 $CI_MY_REGISTRY/burianov/nginx:linux-arm64-v8-quictls-$BUILD_TAG
+        - docker pull --platform linux/amd64 $CI_MY_REGISTRY/burianov/nginx:linux-amd64-quictls-latest
+        - docker pull --platform linux/amd64 $CI_MY_REGISTRY/burianov/nginx:linux-amd64-quictls-$BUILD_TAG
+
+        - docker buildx imagetools create
+          -t dburianov/nginx:quictls-latest
+          $CI_MY_REGISTRY/burianov/nginx:linux-arm64-v8-quictls-latest
+          $CI_MY_REGISTRY/burianov/nginx:linux-amd64-quictls-latest
+          --progress plain
+        - docker buildx imagetools create
+          -t dburianov/nginx:quictls-$BUILD_TAG
+          $CI_MY_REGISTRY/burianov/nginx:linux-arm64-v8-quictls-$BUILD_TAG
+          $CI_MY_REGISTRY/burianov/nginx:linux-amd64-quictls-$BUILD_TAG
+          --progress plain
+
+        - docker rmi
+          $CI_MY_REGISTRY/burianov/nginx:linux-arm64-v8-quictls-latest
+          $CI_MY_REGISTRY/burianov/nginx:linux-amd64-quictls-latest
+          $CI_MY_REGISTRY/burianov/nginx:linux-arm64-v8-quictls-$BUILD_TAG
+          $CI_MY_REGISTRY/burianov/nginx:linux-amd64-quictls-$BUILD_TAG
+
+
+
 
 docker_quictls_config_build:
     image: docker:latest
@@ -127,8 +208,8 @@ docker_quictls_config_build:
         - "README.md"
     only:
       refs:
-        - master
-        - main
+        - master_q
+        - main_q
       variables:
         - "$CI_COMMIT_MESSAGE =~ /^Config: .+/"
     services:
@@ -137,14 +218,14 @@ docker_quictls_config_build:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx create --use
         - docker buildx build
-          --platform linux/amd64
-          --tag dburianov/nginx-aio:quictls-latest
-          --tag dburianov/nginx-aio:quictls-$BUILD_TAG
+          --tag dburianov/nginx-aio:arm-64-quictls-latest
+          --tag dburianov/nginx-aio:arm-64-quictls-$BUILD_TAG
           --push
           --progress plain
           -f Dockerfile.quictls.config
           .
         - docker logout
+#          --platform linux/amd64
 
 docker_boringssl_config_build:
     image: docker:latest
@@ -154,8 +235,8 @@ docker_boringssl_config_build:
         - "README.md"
     only:
       refs:
-        - master
-        - main
+        - master_q
+        - main_q
       variables:
         - "$CI_COMMIT_MESSAGE =~ /^Config: .+/"
     services:
@@ -164,7 +245,6 @@ docker_boringssl_config_build:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx create --use
         - docker buildx build
-          --platform linux/amd64
           --tag dburianov/nginx-aio:boringssl-latest
           --tag dburianov/nginx-aio:boringssl-$BUILD_TAG
           --push
@@ -172,6 +252,7 @@ docker_boringssl_config_build:
           -f Dockerfile.boringssl.config
           .
         - docker logout
+#          --platform linux/amd64
 
 docker_nginx_test:
     image: docker:latest
@@ -188,12 +269,12 @@ docker_nginx_test:
         - $CI_PIPELINE_SOURCE == "schedule"
         - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^test: .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
     services:
         - docker:dind
     script:
         - docker buildx create --use
         - docker buildx build
-          --platform linux/amd64
           --tag nginx_test
           --load
           --progress plain
@@ -201,7 +282,6 @@ docker_nginx_test:
           --build-arg IMAGE=dburianov/nginx-aio:quictls-latest
           .
         - docker buildx build
-          --platform linux/amd64
           --tag nginx_test
           --load
           --progress plain
@@ -211,3 +291,79 @@ docker_nginx_test:
         - docker buildx prune
         - docker buildx rm
         - docker rmi $(docker images -q) || exit 0
+#          --platform linux/amd64
+#          --platform linux/amd64
+
+docker_nginx_test_arm64v8:
+    image: docker:latest
+    stage: docker_nginx_test
+    tags:
+    - arm64
+    except:
+      changes:
+        - "README.md"
+#        - ".gitlab-ci.yml"
+    only:
+      refs:
+        - master
+        - main
+      variables:
+        - $CI_PIPELINE_SOURCE == "schedule"
+        - $CI_COMMIT_MESSAGE =~ /^Release .+/
+        - "$CI_COMMIT_MESSAGE =~ /^test: .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+    services:
+        - docker:dind
+    script:
+        - docker buildx create --use
+        - docker buildx build
+          --tag nginx_test
+          --load
+          --progress plain
+          -f Dockerfile.test
+          --build-arg IMAGE=dburianov/nginx-aio:quictls-latest
+          .
+        - docker buildx prune
+        - docker buildx rm
+        - docker rmi $(docker images -q) || exit 0
+#          --platform linux/amd64
+#          --platform linux/amd64
+.cleanup_script: &cleanup_script
+    image: docker:latest
+    services:
+        - docker:dind
+    script:
+      - docker logout
+      - docker buildx prune --force
+      - docker buildx rm --force --all-inactive
+      - docker rmi $(docker images -q) --force || exit 0
+
+failed_amd64:
+    stage: failed
+#    needs:
+#    - job: B
+#    - job: C
+    <<: *cleanup_script
+    when: on_failure
+
+failed_arm64_v8:
+    tags:
+    - arm64
+    stage: failed
+#    needs:
+#    - job: B
+#    - job: C
+    <<: *cleanup_script
+    when: on_failure
+
+success_amd64:
+    stage: failed
+    <<: *cleanup_script
+    when: on_success
+
+success_arm64_v8:
+    tags:
+    - arm64
+    stage: failed
+    <<: *cleanup_script
+    when: on_success
