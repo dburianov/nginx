@@ -45,6 +45,7 @@ docker_modsecurity_build:
       variables:
         - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
         - $CI_PIPELINE_SOURCE == "schedule"
     services:
         - docker:dind
@@ -74,6 +75,7 @@ docker_boringssl_build:
       variables:
         - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
         - $CI_PIPELINE_SOURCE == "schedule"
     services:
         - docker:dind
@@ -104,6 +106,7 @@ docker_quictls_build:
       variables:
         - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
         - $CI_PIPELINE_SOURCE == "schedule"
     services:
         - docker:dind
@@ -136,6 +139,7 @@ docker_quictls_arm64_build:
       variables:
         - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
         - $CI_PIPELINE_SOURCE == "schedule"
     services:
         - docker:dind
@@ -270,6 +274,7 @@ docker_nginx_test:
         - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^test: .+/"
         - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
     services:
         - docker:dind
     script:
@@ -312,6 +317,7 @@ docker_nginx_test_arm64v8:
         - $CI_COMMIT_MESSAGE =~ /^Release .+/
         - "$CI_COMMIT_MESSAGE =~ /^test: .+/"
         - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
     services:
         - docker:dind
     script:
@@ -350,9 +356,6 @@ failed_arm64_v8:
     tags:
     - arm64
     stage: failed
-#    needs:
-#    - job: B
-#    - job: C
     <<: *cleanup_script
     when: on_failure
 
