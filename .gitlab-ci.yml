@@ -74,7 +74,7 @@ docker_boringssl_build:
       TAG_SSL: "boringssl"
       ARCH: "linux/amd64"
       DOCKERFILE_SUFIX: boringssl
-      DOCKER_REPO: "dburianov/nginx-aio"
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
     <<: *build_script
 
 docker_quictls_build:
@@ -83,7 +83,7 @@ docker_quictls_build:
       TAG_SSL: "linux-amd64-quictls"
       ARCH: "linux/amd64"
       DOCKERFILE_SUFIX: "quictls"
-      DOCKER_REPO: "dburianov/nginx-aio"
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
     <<: *build_script
 
 docker_quictls_arm64_build:
@@ -94,7 +94,7 @@ docker_quictls_arm64_build:
       TAG_SSL: "linux-arm64-v8-quictls"
       ARCH: "linux/arm64/v8"
       DOCKERFILE_SUFIX: "quictls"
-      DOCKER_REPO: "dburianov/nginx-aio"
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
     <<: *build_script
 
 docker_curl_push:
@@ -263,29 +263,17 @@ docker_nginx_quictls_test_arm64v8:
       - docker buildx rm --force --all-inactive
       - docker rmi $(docker images -q) --force || exit 0
 
-failed_amd64:
+cleanup_amd64:
     stage: failed
 #    needs:
 #    - job: B
 #    - job: C
     <<: *cleanup_script
-    when: on_failure
+    when: always
 
-failed_arm64_v8:
+cleanup_arm64_v8:
     tags:
     - arm64
     stage: failed
     <<: *cleanup_script
-    when: on_failure
-
-success_amd64:
-    stage: failed
-    <<: *cleanup_script
-    when: on_success
-
-success_arm64_v8:
-    tags:
-    - arm64
-    stage: failed
-    <<: *cleanup_script
-    when: on_success
+    when: always
