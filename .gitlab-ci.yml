@@ -38,13 +38,13 @@ setvars-job:
 
 login-job:
   stage: prerape
-  <<: *build_script
+  <<: *login_script
 
 login-job_arm64:
   stage: prerape
   tags:
     - arm64
-  <<: *build_script
+  <<: *login_script
 
 .build_script: &build_script
     image: docker:latest
