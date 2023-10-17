@@ -51,12 +51,12 @@ setvars-job:
         - docker buildx create --use
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx build
-          --tag dburianov/nginx-aio:$TAG_SSL-latest
-          --tag dburianov/nginx-aio:$TAG_SSL-$BUILD_TAG
+          --tag $DOCKER_REPO:$TAG_SSL-latest
+          --tag $DOCKER_REPO:$TAG_SSL-$BUILD_TAG
           --push
           --progress plain
           --platform $ARCH
-          -f Dockerfile.$TAG_SSL
+          -f Dockerfile.$DOCKERFILE_SUFIX
           .
 
 docker_modsecurity_build:
@@ -64,6 +64,8 @@ docker_modsecurity_build:
     variables:
       TAG_SSL: "modsecutity_rules"
       ARCH: "linux/amd64,linux/arm/v7,linux/arm64/v8,linux/arm/v8"
+      DOCKERFILE_SUFIX: modsecutity_rules
+      DOCKER_REPO: "dburianov/modsecurity_rules"
     <<: *build_script
 
 docker_boringssl_build:
@@ -71,6 +73,8 @@ docker_boringssl_build:
     variables:
       TAG_SSL: "boringssl"
       ARCH: "linux/amd64"
+      DOCKERFILE_SUFIX: boringssl
+      DOCKER_REPO: "dburianov/nginx-aio"
     <<: *build_script
 
 docker_quictls_build:
@@ -78,6 +82,8 @@ docker_quictls_build:
     variables:
       TAG_SSL: "linux-amd64-quictls"
       ARCH: "linux/amd64"
+      DOCKERFILE_SUFIX: "quictls"
+      DOCKER_REPO: "dburianov/nginx-aio"
     <<: *build_script
 
 docker_quictls_arm64_build:
@@ -87,6 +93,8 @@ docker_quictls_arm64_build:
     variables:
       TAG_SSL: "linux-arm64-v8-quictls"
       ARCH: "linux/arm64/v8"
+      DOCKERFILE_SUFIX: "quictls"
+      DOCKER_REPO: "dburianov/nginx-aio"
     <<: *build_script
 
 docker_curl_push:
@@ -211,9 +219,9 @@ docker_boringssl_config_build:
           --tag nginx_test_$TAG_SSL
           --load
           --progress plain
-          --build-arg IMAGE=dburianov/nginx-aio:$TAG_SSL-latest
+          --build-arg IMAGE=$DOCKER_REPO:$TAG_SSL-latest
           --platform $ARCH
-          -f Dockerfile.test
+          -f Dockerfile.$DOCKERFILE_SUFIX
           .
 
 docker_nginx_boringssl_test:
@@ -221,6 +229,8 @@ docker_nginx_boringssl_test:
     variables:
       TAG_SSL: "boringssl"
       ARCH: "linux/amd64"
+      DOCKERFILE_SUFIX: "test"
+      DOCKER_REPO: "dburianov/nginx-aio"
     <<: *docker_nginx_test_script
 
 docker_nginx_quictls_test:
@@ -228,6 +238,8 @@ docker_nginx_quictls_test:
     variables:
       TAG_SSL: "quictls"
       ARCH: "linux/amd64"
+      DOCKERFILE_SUFIX: "test"
+      DOCKER_REPO: "dburianov/nginx-aio"
     <<: *docker_nginx_test_script
 
 docker_nginx_quictls_test_arm64v8:
@@ -237,6 +249,8 @@ docker_nginx_quictls_test_arm64v8:
     variables:
       TAG_SSL: "quictls"
       ARCH: "linux/amd64"
+      DOCKERFILE_SUFIX: "test"
+      DOCKER_REPO: "dburianov/nginx-aio"
     <<: *docker_nginx_test_script
 
 .cleanup_script: &cleanup_script
