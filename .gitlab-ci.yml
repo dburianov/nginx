@@ -31,20 +31,6 @@ setvars-job:
     reports:
       dotenv: build.env
 
-.login_script: &login_script
-  script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
-
-login-job:
-  stage: prerape
-  <<: *login_script
-
-login-job_arm64:
-  stage: prerape
-  tags:
-    - arm64
-  <<: *login_script
-
 .build_script: &build_script
     image: docker:latest
     except:
@@ -63,6 +49,7 @@ login-job_arm64:
         - docker:dind
     script:
         - docker buildx create --use
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx build
           --tag dburianov/nginx-aio:$TAG_SSL-latest
           --tag dburianov/nginx-aio:$TAG_SSL-$BUILD_TAG
@@ -121,6 +108,7 @@ docker_curl_push:
     services:
         - docker:dind
     script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
 
         - docker pull --platform linux/arm64/v8 $CI_MY_REGISTRY/burianov/nginx-aio:linux-arm64-v8-quictls-latest
@@ -217,6 +205,7 @@ docker_boringssl_config_build:
     services:
         - docker:dind
     script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker buildx create --use
         - docker buildx build
           --tag nginx_test_$TAG_SSL
