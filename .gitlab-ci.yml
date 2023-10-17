@@ -34,7 +34,6 @@ setvars-job:
 .login_script: &login_script
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
-    - docker buildx create --use
 
 login-job:
   stage: prerape
@@ -63,6 +62,7 @@ login-job_arm64:
     services:
         - docker:dind
     script:
+        - docker buildx create --use
         - docker buildx build
           --tag dburianov/nginx-aio:$TAG_SSL-latest
           --tag dburianov/nginx-aio:$TAG_SSL-$BUILD_TAG
