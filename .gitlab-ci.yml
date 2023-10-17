@@ -75,7 +75,7 @@ docker_boringssl_build:
       TAG_SSL: "boringssl"
       ARCH: "linux/amd64"
       DOCKERFILE_SUFIX: boringssl
-      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+      DOCKER_REPO: "dburianov/nginx-aio"
     <<: *build_script
 
 docker_quictls_build:
