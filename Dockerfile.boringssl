@@ -359,6 +359,7 @@ RUN <<EOT
     echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/openssl.conf
     ldconfig -v
     cp -rf /usr/local/nginx/conf.docker/* /usr/local/nginx/conf/
+    chmod +x /docker-entrypoint.sh
 EOT
 
 ENV LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
