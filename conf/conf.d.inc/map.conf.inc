@@ -15,7 +15,7 @@ map $upstream_cache_status $upstream_cache_status_map {
     default $upstream_cache_status;
 }
 map $upstream_addr $upstream_addr_map {
-    "" "127.0.0.1";
+    "" "0.0.0.0:0";
     default $upstream_addr;
 }
 map $upstream_status $upstream_status_map {

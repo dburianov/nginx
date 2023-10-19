@@ -14,14 +14,21 @@ stages:
 variables:
     IMAGE_LATEST: dburianov/nginx-aio:arm-64-latest
     IMAGE_COMMIT: dburianov/nginx-aio:arm-64-$CI_COMMIT_SHORT_SHA
+    AMD_TAG: "linux-amd64"
+    ARM_TAG: "linux-arm64-v8"
+    AMD_ARCH: "linux/amd64"
+    ARM_ARCH: "linux/arm64/v8"
     CI: 'false'
     #DOCKER_HOST: "tcp://docker:2375"
     DOCKER_TLS_CERTDIR: ""
 
+include:
+  - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.cleanup_script.yml"
+  - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.build_script.yml"
+  - template: Security/SAST.gitlab-ci.yml
+
 sast:
   stage: test
-include:
-- template: Security/SAST.gitlab-ci.yml
 
 setvars-job:
   stage: prerape
@@ -31,35 +38,6 @@ setvars-job:
     reports:
       dotenv: build.env
 
-.build_script: &build_script
-    image: docker:latest
-    except:
-      changes:
-        - "README.md"
-    only:
-      refs:
-        - master
-        - main
-      variables:
-        - $CI_COMMIT_MESSAGE =~ /^Release .+/
-        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
-        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
-        - $CI_PIPELINE_SOURCE == "schedule"
-    services:
-        - docker:dind
-    script:
-        - docker buildx create --use
-        - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
-        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
-        - docker buildx build
-          --tag $DOCKER_REPO:$TAG_SSL-latest
-          --tag $DOCKER_REPO:$TAG_SSL-$BUILD_TAG
-          --push
-          --progress plain
-          --platform $ARCH
-          -f Dockerfile.$DOCKERFILE_SUFIX
-          .
-
 docker_modsecurity_build:
     stage: docker_modsecurity
     variables:
@@ -67,40 +45,50 @@ docker_modsecurity_build:
       ARCH: "linux/amd64,linux/arm/v7,linux/arm64/v8,linux/arm/v8"
       DOCKERFILE_SUFIX: modsecutity_rules
       DOCKER_REPO: "dburianov/modsecurity_rules"
-    <<: *build_script
+    extends: .build_script
 
 docker_boringssl_build:
     stage: docker_build
     variables:
-      TAG_SSL: "boringssl"
-      ARCH: "linux/amd64"
+      TAG_SSL: $AMD_TAG-boringssl
+      ARCH: $AMD_ARCH
       DOCKERFILE_SUFIX: boringssl
-      DOCKER_REPO: "dburianov/nginx-aio"
-    <<: *build_script
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+    extends: .build_script
+
+docker_boringssl_arm64_build:
+    stage: docker_build
+    tags:
+    - arm64
+    variables:
+      TAG_SSL: $ARM_TAG-boringssl
+      ARCH: $ARM_ARCH
+      DOCKERFILE_SUFIX: boringssl
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+    extends: .build_script
 
 docker_quictls_build:
     stage: docker_build
     variables:
-      TAG_SSL: "linux-amd64-quictls"
-      ARCH: "linux/amd64"
+      TAG_SSL: AMD_TAG-quictls
+      ARCH: $AMD_ARCH
       DOCKERFILE_SUFIX: "quictls"
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
-    <<: *build_script
+    extends: .build_script
 
 docker_quictls_arm64_build:
     stage: docker_build
     tags:
     - arm64
     variables:
-      TAG_SSL: "linux-arm64-v8-quictls"
-      ARCH: "linux/arm64/v8"
+      TAG_SSL: $ARM_TAG-quictls
+      ARCH: $ARM_ARCH
       DOCKERFILE_SUFIX: "quictls"
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
-    <<: *build_script
+    extends: .build_script
 
-docker_curl_push:
+.push_script: &push_script
     image: docker:latest
-    stage: push
     except:
       changes:
         - "README.md"
@@ -120,27 +108,51 @@ docker_curl_push:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
 
-        - docker pull --platform linux/arm64/v8 $CI_MY_REGISTRY/burianov/nginx-aio:linux-arm64-v8-quictls-latest
-        - docker pull --platform linux/arm64/v8 $CI_MY_REGISTRY/burianov/nginx-aio:linux-arm64-v8-quictls-$BUILD_TAG
-        - docker pull --platform linux/amd64 $CI_MY_REGISTRY/burianov/nginx-aio:linux-amd64-quictls-latest
-        - docker pull --platform linux/amd64 $CI_MY_REGISTRY/burianov/nginx-aio:linux-amd64-quictls-$BUILD_TAG
+        - docker pull --platform $ARCH_ONE $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_SSL-latest
+        - docker pull --platform $ARCH_ONE $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_SSL-$BUILD_TAG
+        - docker pull --platform $ARCH_TWO $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_SSL-latest
+        - docker pull --platform $ARCH_TWO $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_SSL-$BUILD_TAG
 
         - docker buildx imagetools create
-          -t dburianov/nginx-aio:quictls-latest
-          $CI_MY_REGISTRY/burianov/nginx-aio:linux-arm64-v8-quictls-latest
-          $CI_MY_REGISTRY/burianov/nginx-aio:linux-amd64-quictls-latest
+          -t $DOCKER_REPO_DST:$SSL_VENDOR-latest
+          $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_ONE-latest
+          $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_TWO-latest
           --progress plain
         - docker buildx imagetools create
-          -t dburianov/nginx-aio:quictls-$BUILD_TAG
-          $CI_MY_REGISTRY/burianov/nginx-aio:linux-arm64-v8-quictls-$BUILD_TAG
-          $CI_MY_REGISTRY/burianov/nginx-aio:linux-amd64-quictls-$BUILD_TAG
+          -t $DOCKER_REPO_DST:$SSL_VENDOR-$BUILD_TAG
+          $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_ONE-$BUILD_TAG
+          $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_TWO-$BUILD_TAG
           --progress plain
 
         - docker rmi
-          $CI_MY_REGISTRY/burianov/nginx-aio:linux-arm64-v8-quictls-latest
-          $CI_MY_REGISTRY/burianov/nginx-aio:linux-amd64-quictls-latest
-          $CI_MY_REGISTRY/burianov/nginx-aio:linux-arm64-v8-quictls-$BUILD_TAG
-          $CI_MY_REGISTRY/burianov/nginx-aio:linux-amd64-quictls-$BUILD_TAG
+          $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_ONE-latest
+          $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_TWO-latest
+          $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_ONE-$BUILD_TAG
+          $CI_MY_REGISTRY/$DOCKER_REPO_PATH:$TAG_TWO-$BUILD_TAG
+
+docker_boringssl_push:
+    stage: push
+    variables:
+      SSL_VENDOR: boringssl
+      TAG_ONE: $AMD_TAG-$SSL_VENDOR
+      TAG_TWO: $AMD_TAG-$SSL_VENDOR
+      ARCH_ONE: $ARM_ARCH
+      ARCH_TWO: $AMD_ARCH
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+      DOCKER_REPO_DST: "dburianov/nginx-aio"
+    <<: *push_script
+
+docker_quictls_push:
+    stage: push
+    variables:
+      SSL_VENDOR: quictls
+      TAG_ONE: $AMD_TAG-$SSL_VENDOR
+      TAG_TWO: $AMD_TAG-$SSL_VENDOR
+      ARCH_ONE: $ARM_ARCH
+      ARCH_TWO: $AMD_ARCH
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+      DOCKER_REPO_DST: "dburianov/nginx-aio"
+    <<: *push_script
 
 docker_quictls_config_build:
     image: docker:latest
@@ -254,27 +266,14 @@ docker_nginx_quictls_test_arm64v8:
       DOCKER_REPO: "dburianov/nginx-aio"
     <<: *docker_nginx_test_script
 
-.cleanup_script: &cleanup_script
-    image: docker:latest
-    services:
-        - docker:dind
-    script:
-      - docker logout
-      - docker buildx prune --force
-      - docker buildx rm --force --all-inactive
-      - docker rmi $(docker images -q) --force || exit 0
-
 cleanup_amd64:
     stage: failed
-#    needs:
-#    - job: B
-#    - job: C
-    <<: *cleanup_script
+    extends: .cleanup_script
     when: always
 
 cleanup_arm64_v8:
     tags:
     - arm64
     stage: failed
-    <<: *cleanup_script
+    extends: .cleanup_script
     when: always

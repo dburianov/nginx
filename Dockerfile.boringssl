@@ -22,6 +22,13 @@ EOT
 FROM ubuntu_core AS ubuntu-build
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
 ARG TARGETARCH
+ENV DEBIAN_FRONTEND noninteractive
+ENV GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.2 \
+    GOLANG_VERSION=1.21.3
 
 RUN <<EOT
     echo "apt update"
@@ -43,13 +50,10 @@ RUN <<EOT
         libssl-dev libgd-dev \
         libperl-dev gperf uthash-dev \
         flex bison curl
-    wget -qO /usr/local/bin/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip
-    gunzip /usr/local/bin/ninja.gz
-    chmod a+x /usr/local/bin/ninja
-    wget https://go.dev/dl/go1.21.0.linux-$TARGETARCH.tar.gz
+    wget https://go.dev/dl/go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz
     rm -rf /usr/local/go
-    tar -C /usr/local -xzf go1.21.0.linux-$TARGETARCH.tar.gz
-    rm -rf go1.21.0.linux-$TARGETARCH.tar.gz
+    tar -C /usr/local -xzf go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz
+    rm -rf go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz
     rm -rf /var/lib/apt/lists/*
     rm -rf /usr/share/doc/*
     rm -rf /usr/share/man/*
@@ -57,13 +61,6 @@ RUN <<EOT
     apt-get autoremove -y
     apt-get clean -y
 EOT
-
-ENV DEBIAN_FRONTEND noninteractive
-ENV GRPC_VERSION=v1.49.2 \
-    OTEL_CPP_VERSION=v1.8.1 \
-    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
-    MODSECURITY_VERSION=v3/master \
-    NGINX_VERSION=release-1.25.2
 
 RUN <<EOT
     echo "git clone"
@@ -124,9 +121,8 @@ RUN <<EOT
     export PATH=$PATH:/usr/local/go/bin
     cd /usr/src/boringssl
     mkdir build
-    cd build
-    cmake -GNinja ..
-    ninja
+    cmake -Bbuild
+    make -Cbuild -j $(nproc)
 EOT
 
 RUN <<EOT
@@ -348,7 +344,6 @@ COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
 COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
 COPY --from=geoip /geoip /usr/local/nginx/geoip
 COPY --from=curl /usr/local/curl/ /usr/local/curl/
-#COPY --from=curl /opt/quiche/target/release /opt/quiche/target/release
 COPY --from=curl /usr/local/bin/httpstat.sh /usr/local/bin/httpstat.sh
 COPY --from=openssl /usr/local/ssl/ /usr/local/ssl/
 

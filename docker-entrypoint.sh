@@ -197,5 +197,6 @@ export LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
 
 # test env
 #echo -n "njs version is: "
+/usr/local/nginx/sbin/nginx -t
 
 exec "$@"

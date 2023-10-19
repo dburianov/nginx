@@ -149,7 +149,8 @@ log_format logs_json_v2_1 escape=json
     '"request_length":$request_length,'
     '"scheme":"$scheme",'
     '"server_protocol":"$server_protocol",'
-    '"version_http":"$version_http"'
+    '"version_http":"$version_http"',
+    '"method":"$request_method"'
   '},'
   '"response":{'
     '"status":$status,'
