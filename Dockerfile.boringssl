@@ -363,7 +363,7 @@ RUN <<EOT
 EOT
 
 ENV LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
-ENV PATH=/usr/local/curl/bin:/usr/local/ssl/bin:$PATH
+ENV PATH=/usr/local/nginx/sbin:/usr/local/curl/bin:/usr/local/ssl/bin:$PATH
 
 EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
 
