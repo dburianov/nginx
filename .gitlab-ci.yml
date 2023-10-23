@@ -110,15 +110,21 @@ docker_quictls_arm64_build:
         - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
 
         - docker pull --platform $ARCH_ONE $DOCKER_REPO:$TAG_ONE-latest
-#        - docker pull --platform $ARCH_ONE $DOCKER_REPO:$TAG_ONE-$BUILD_TAG
+        - docker pull --platform $ARCH_ONE $DOCKER_REPO:$TAG_ONE-$BUILD_TAG
         - docker pull --platform $ARCH_TWO $DOCKER_REPO:$TAG_TWO-latest
-#        - docker pull --platform $ARCH_TWO $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
+        - docker pull --platform $ARCH_TWO $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
 
         - docker buildx imagetools create
           -t $DOCKER_REPO_DST:$SSL_VENDOR-latest
           -t $DOCKER_REPO:$SSL_VENDOR-latest
           $DOCKER_REPO:$TAG_ONE-latest
           $DOCKER_REPO:$TAG_TWO-latest
+          --progress plain
+        - docker buildx imagetools create
+          -t $DOCKER_REPO_DST:$SSL_VENDOR-$BUILD_TAG
+          -t $DOCKER_REPO:$SSL_VENDOR-$BUILD_TAG
+          $DOCKER_REPO:$TAG_ONE-$BUILD_TAG
+          $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
           --progress plain
 
 
