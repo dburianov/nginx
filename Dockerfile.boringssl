@@ -11,10 +11,9 @@ RUN <<EOT
     apt-get -yqq update
     apt-get install -y --no-install-recommends --no-install-suggests \
         lua-socket lua-zlib
-    rm -rf /var/lib/apt/lists/*
-    rm -rf /usr/share/doc/*
-    rm -rf /usr/share/man/*
-    apt-get autoremove -y
+    rm -rf /var/lib/apt/lists/* \
+           /usr/share/doc/* \
+           /usr/share/man/*
     apt-get autoremove -y
     apt-get clean -y
 EOT
@@ -53,11 +52,10 @@ RUN <<EOT
     wget https://go.dev/dl/go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz
     rm -rf /usr/local/go
     tar -C /usr/local -xzf go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz
-    rm -rf go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz
-    rm -rf /var/lib/apt/lists/*
-    rm -rf /usr/share/doc/*
-    rm -rf /usr/share/man/*
-    apt-get autoremove -y
+    rm -rf go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz \
+           /var/lib/apt/lists/* \
+           /usr/share/doc/* \
+           /usr/share/man/*
     apt-get autoremove -y
     apt-get clean -y
 EOT
