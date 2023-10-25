@@ -25,6 +25,7 @@ variables:
 include:
   - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.cleanup_script.yml"
   - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.build_script.yml"
+  - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.docker_nginx_test_script.yml"
   - template: Security/SAST.gitlab-ci.yml
 
 sast:
