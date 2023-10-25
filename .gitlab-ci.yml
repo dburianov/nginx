@@ -8,7 +8,6 @@ stages:
 - docker_build
 - docker_nginx_test
 - push
-- docker_config
 - failed
 
 variables:
@@ -19,7 +18,6 @@ variables:
     AMD_ARCH: "linux/amd64"
     ARM_ARCH: "linux/arm64/v8"
     CI: 'false'
-    #DOCKER_HOST: "tcp://docker:2375"
     DOCKER_TLS_CERTDIR: ""
 
 include:
@@ -190,56 +188,6 @@ docker_quictls_push:
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
       DOCKER_REPO_DST: "dburianov/nginx-aio"
     <<: *push_script
-
-docker_quictls_config_build:
-    image: docker:latest
-    stage: docker_config
-    except:
-      changes:
-        - "README.md"
-    only:
-      refs:
-        - master_q
-        - main_q
-      variables:
-        - "$CI_COMMIT_MESSAGE =~ /^Config: .+/"
-    services:
-        - docker:dind
-    script:
-        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
-        - docker buildx create --use
-        - docker buildx build
-          --tag dburianov/nginx-aio:arm-64-quictls-latest
-          --tag dburianov/nginx-aio:arm-64-quictls-$BUILD_TAG
-          --push
-          --progress plain
-          -f Dockerfile.quictls.config
-          .
-
-docker_boringssl_config_build:
-    image: docker:latest
-    stage: docker_config
-    except:
-      changes:
-        - "README.md"
-    only:
-      refs:
-        - master_q
-        - main_q
-      variables:
-        - "$CI_COMMIT_MESSAGE =~ /^Config: .+/"
-    services:
-        - docker:dind
-    script:
-        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
-        - docker buildx create --use
-        - docker buildx build
-          --tag dburianov/nginx-aio:boringssl-latest
-          --tag dburianov/nginx-aio:boringssl-$BUILD_TAG
-          --push
-          --progress plain
-          -f Dockerfile.boringssl.config
-          .
 
 cleanup_amd64:
     stage: failed
