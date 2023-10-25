@@ -204,54 +204,32 @@ docker_boringssl_config_build:
           .
 #          --platform linux/amd64
 
-
-.docker_nginx_test_script: &docker_nginx_test_script
-    image: docker:latest
-    stage: docker_nginx_test
-    except:
-      changes:
-        - "README.md"
-    only:
-      refs:
-        - master
-        - main
-      variables:
-        - $CI_PIPELINE_SOURCE == "schedule"
-        - $CI_COMMIT_MESSAGE =~ /^Release .+/
-        - "$CI_COMMIT_MESSAGE =~ /^test: .+/"
-        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
-        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
-    services:
-        - docker:dind
-    script:
-        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
-        - docker buildx create --use
-        - docker buildx build
-          --tag nginx_test_$TAG_SSL
-          --load
-          --progress plain
-          --build-arg IMAGE=$DOCKER_REPO:$TAG_SSL-latest
-          --platform $ARCH
-          -f Dockerfile.$DOCKERFILE_SUFIX
-          .
-
 docker_nginx_boringssl_test:
     stage: docker_nginx_test
     variables:
       TAG_SSL: "boringssl"
-      ARCH: "linux/amd64"
+      ARCH: $AMD_ARCH
       DOCKERFILE_SUFIX: "test"
       DOCKER_REPO: "dburianov/nginx-aio"
-    <<: *docker_nginx_test_script
+    extends: .docker_nginx_test_script
+
+docker_nginx_boringssl_test_arm64v8:
+    stage: docker_nginx_test
+    variables:
+      TAG_SSL: "boringssl"
+      ARCH: $ARM_ARCH
+      DOCKERFILE_SUFIX: "test"
+      DOCKER_REPO: "dburianov/nginx-aio"
+    extends: .docker_nginx_test_script
 
 docker_nginx_quictls_test:
     stage: docker_nginx_test
     variables:
       TAG_SSL: "quictls"
-      ARCH: "linux/amd64"
+      ARCH: $AMD_ARCH
       DOCKERFILE_SUFIX: "test"
       DOCKER_REPO: "dburianov/nginx-aio"
-    <<: *docker_nginx_test_script
+    extends: .docker_nginx_test_script
 
 docker_nginx_quictls_test_arm64v8:
     stage: docker_nginx_test
@@ -259,10 +237,10 @@ docker_nginx_quictls_test_arm64v8:
     - arm64
     variables:
       TAG_SSL: "quictls"
-      ARCH: "linux/amd64"
+      ARCH: $ARM_ARCH
       DOCKERFILE_SUFIX: "test"
       DOCKER_REPO: "dburianov/nginx-aio"
-    <<: *docker_nginx_test_script
+    extends: .docker_nginx_test_script
 
 cleanup_amd64:
     stage: failed
