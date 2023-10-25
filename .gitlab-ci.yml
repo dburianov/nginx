@@ -6,9 +6,9 @@ stages:
 - prerape
 - docker_modsecurity
 - docker_build
+- docker_nginx_test
 - push
 - docker_config
-- docker_nginx_test
 - failed
 
 variables:
@@ -87,6 +87,44 @@ docker_quictls_arm64_build:
       DOCKERFILE_SUFIX: "quictls"
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
     extends: .build_script
+
+docker_nginx_boringssl_test:
+    stage: docker_nginx_test
+    variables:
+      TAG_SSL: "$AMD_TAG-boringssl"
+      ARCH: $AMD_ARCH
+      DOCKERFILE_SUFIX: "test"
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+    extends: .docker_nginx_test_script
+
+docker_nginx_boringssl_test_arm64v8:
+    stage: docker_nginx_test
+    variables:
+      TAG_SSL: "$ARM_TAG-boringssl"
+      ARCH: $ARM_ARCH
+      DOCKERFILE_SUFIX: "test"
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+    extends: .docker_nginx_test_script
+
+docker_nginx_quictls_test:
+    stage: docker_nginx_test
+    variables:
+      TAG_SSL: "$AMD_TAG-quictls"
+      ARCH: $AMD_ARCH
+      DOCKERFILE_SUFIX: "test"
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+    extends: .docker_nginx_test_script
+
+docker_nginx_quictls_test_arm64v8:
+    stage: docker_nginx_test
+    tags:
+    - arm64
+    variables:
+      TAG_SSL: "$ARM_TAG-quictls"
+      ARCH: $ARM_ARCH
+      DOCKERFILE_SUFIX: "test"
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+    extends: .docker_nginx_test_script
 
 .push_script: &push_script
     image: docker:latest
@@ -177,7 +215,6 @@ docker_quictls_config_build:
           --progress plain
           -f Dockerfile.quictls.config
           .
-#          --platform linux/amd64
 
 docker_boringssl_config_build:
     image: docker:latest
@@ -203,45 +240,6 @@ docker_boringssl_config_build:
           --progress plain
           -f Dockerfile.boringssl.config
           .
-#          --platform linux/amd64
-
-docker_nginx_boringssl_test:
-    stage: docker_nginx_test
-    variables:
-      TAG_SSL: "boringssl"
-      ARCH: $AMD_ARCH
-      DOCKERFILE_SUFIX: "test"
-      DOCKER_REPO: "dburianov/nginx-aio"
-    extends: .docker_nginx_test_script
-
-docker_nginx_boringssl_test_arm64v8:
-    stage: docker_nginx_test
-    variables:
-      TAG_SSL: "boringssl"
-      ARCH: $ARM_ARCH
-      DOCKERFILE_SUFIX: "test"
-      DOCKER_REPO: "dburianov/nginx-aio"
-    extends: .docker_nginx_test_script
-
-docker_nginx_quictls_test:
-    stage: docker_nginx_test
-    variables:
-      TAG_SSL: "quictls"
-      ARCH: $AMD_ARCH
-      DOCKERFILE_SUFIX: "test"
-      DOCKER_REPO: "dburianov/nginx-aio"
-    extends: .docker_nginx_test_script
-
-docker_nginx_quictls_test_arm64v8:
-    stage: docker_nginx_test
-    tags:
-    - arm64
-    variables:
-      TAG_SSL: "quictls"
-      ARCH: $ARM_ARCH
-      DOCKERFILE_SUFIX: "test"
-      DOCKER_REPO: "dburianov/nginx-aio"
-    extends: .docker_nginx_test_script
 
 cleanup_amd64:
     stage: failed
@@ -254,3 +252,6 @@ cleanup_arm64_v8:
     stage: failed
     extends: .cleanup_script
     when: always
+#    needs:
+#    - job: B
+#    - job: C
