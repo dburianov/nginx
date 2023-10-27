@@ -68,7 +68,7 @@ Features: alt-svc AsynchDNS brotli HSTS HTTP2 HTTP3 HTTPS-proxy IDN IPv6 Largefi
 ## Nginx
 ### Nginx with BoringSSL, only linux/amd64
 ```
-nginx version: nginx/1.25.2 (quic-boringssl)
+nginx version: nginx/1.25.3 (quic-boringssl)
 built with OpenSSL 1.1.1 (compatible; BoringSSL) (running with BoringSSL)
 TLS SNI support enabled
 configure arguments:
@@ -133,7 +133,7 @@ configure arguments:
 ```
 ### Nginx with QuickTLS, linux/amd64
 ```
-nginx version: nginx/1.25.2 (quictls)
+nginx version: nginx/1.25.3 (quictls)
 built with OpenSSL 3.0.10+quic 1 Aug 2023
 TLS SNI support enabled
 configure arguments:
@@ -199,7 +199,7 @@ configure arguments:
 ```
 ### Nginx with QuickTLS, linux/arm64/v8
 ```
-nginx version: nginx/1.25.2 (quictls)
+nginx version: nginx/1.25.3 (quictls)
 built with OpenSSL 3.0.10+quic 1 Aug 2023
 TLS SNI support enabled
 configure arguments:
