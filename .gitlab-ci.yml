@@ -164,7 +164,6 @@ docker_nginx_quictls_test_arm64v8:
           $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
           --progress plain
 
-
 docker_boringssl_push:
     stage: push
     variables:
