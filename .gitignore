@@ -38,4 +38,4 @@ override.tf.json
 **/*.pem
 #build
 .scannerwork
-*_
+**/*_
