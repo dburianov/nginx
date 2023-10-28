@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+touch /tmp/nginx/entrypoint.test 2>/dev/null || { echo >&2 "$ME: error: can not modify /tmp/nginx/entrypoint.test (read-only file system?)"; exit 0; }
+
+
 export DNS_RESOLVERS="$(cat /etc/resolv.conf | grep nameserver | cut -d' ' -f2 | xargs)"
 NGINX_INC_FOLDER='/tmp/nginx/conf.d.inc'
 mkdir -p $NGINX_INC_FOLDER
@@ -10,8 +14,7 @@ LC_ALL=C
 ME=$( basename "$0" )
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-
-touch /tmp/nginx/entrypoint.test 2>/dev/null || { echo >&2 "$ME: error: can not modify /tmp/nginx/entrypoint.test (read-only file system?)"; exit 0; }
+#################
 
 ceildiv() {
   num=$1
