@@ -14,7 +14,7 @@ RUN <<EOT
     openssl list -providers
     curl --version
 
-    echo "worker_processes $(nproc);" > /usr/local/nginx/conf.docker/conf.d.inc/worker_processes.conf.inc
+    echo "worker_processes $(nproc);" > /tmp/nginx/conf.d.inc/worker_processes.conf.inc
     env | sort
     /usr/local/bin/njs -v
     /usr/local/nginx/sbin/nginx -V
