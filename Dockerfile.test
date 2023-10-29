@@ -14,6 +14,7 @@ RUN <<EOT
     openssl list -providers
     curl --version
 
+    mkdir -p /tmp/nginx/conf.d.inc
     echo "worker_processes $(nproc);" > /tmp/nginx/conf.d.inc/worker_processes.conf.inc
     env | sort
     /usr/local/bin/njs -v
