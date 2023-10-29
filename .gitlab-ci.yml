@@ -86,6 +86,7 @@ docker_quictls_arm64_build:
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
     extends: .build_script
 
+# run tests
 docker_nginx_boringssl_test:
     stage: docker_nginx_test
     variables:
