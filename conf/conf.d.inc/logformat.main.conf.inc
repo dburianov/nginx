@@ -1,0 +1,12 @@
+log_format  main
+  'remote_addr:$remote_addr\t'
+  'time_local:$time_local\t'
+  'method:$request_method\t'
+  'uri:$request_uri\t'
+  'host:$host\t'
+  'status:$status\t'
+  'bytes_sent:$body_bytes_sent\t'
+  'referer:$http_referer\t'
+  'useragent:$http_user_agent\t'
+  'forwardedfor:$http_x_forwarded_for\t'
+  'request_time:$request_time';
