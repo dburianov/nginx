@@ -6,8 +6,6 @@ ENV PATH=/usr/local/curl/bin:/usr/local/ssl/bin:$PATH
 ARG CACHEBUST=0
 RUN <<EOT
     set -e
-#    ldconfig -v
-#    ls -la /usr/local/curl/lib/
     #/usr/local/ssl/bin/
     openssl version -a
     #/usr/local/ssl/bin/
