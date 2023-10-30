@@ -98,6 +98,8 @@ docker_nginx_boringssl_test:
 
 docker_nginx_boringssl_test_arm64v8:
     stage: docker_nginx_test
+    tags:
+    - arm64
     variables:
       TAG_SSL: "$ARM_TAG-boringssl"
       ARCH: $ARM_ARCH
@@ -203,3 +205,4 @@ cleanup_arm64_v8:
 #    needs:
 #    - job: B
 #    - job: C
+
