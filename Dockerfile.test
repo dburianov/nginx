@@ -7,18 +7,23 @@ ARG CACHEBUST=0
 RUN <<EOT
     set -e
     #/usr/local/ssl/bin/
+    echo "openssl version -a"
     openssl version -a
     #/usr/local/ssl/bin/
+    echo "openssl list -providers"
     openssl list -providers
     curl --version
 
+    echo "create files and folder"
     mkdir -p /tmp/nginx/conf.d.inc
     echo "worker_processes $(nproc);" | tee /tmp/nginx/conf.d.inc/worker_processes.conf.inc
     export DNS_RESOLVERS="$(cat /etc/resolv.conf | grep nameserver | cut -d' ' -f2 | xargs)"
     echo "resolver ${DNS_RESOLVERS} valid=30s;" | tee /tmp/nginx/conf.d.inc/resolver.conf.inc
     echo "resolver_timeout 5s;" | tee -a /tmp/nginx/conf.d.inc/resolver.conf.inc
 
+    echo "env | sort"
     env | sort
+    echo "njs -v"
     /usr/local/bin/njs -v
     /usr/local/nginx/sbin/nginx -V
     /usr/local/nginx/sbin/nginx -t
