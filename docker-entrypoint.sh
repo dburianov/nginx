@@ -195,8 +195,6 @@ echo "worker_processes $ncpu;" | tee $NGINX_INC_FOLDER/worker_processes.conf.inc
 export PATH="/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH"
 export LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
 
-
-
 # test env
 #echo -n "njs version is: "
 /usr/local/nginx/sbin/nginx -t
