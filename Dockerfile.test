@@ -23,4 +23,3 @@ RUN <<EOT
     /usr/local/nginx/sbin/nginx -V
     /usr/local/nginx/sbin/nginx -t
 EOT
-
