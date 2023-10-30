@@ -7,8 +7,6 @@ touch /tmp/nginx/entrypoint.test 2>/dev/null || { echo >&2 "$ME: error: can not 
 export DNS_RESOLVERS="$(cat /etc/resolv.conf | grep nameserver | cut -d' ' -f2 | xargs)"
 NGINX_INC_FOLDER='/tmp/nginx/conf.d.inc'
 mkdir -p $NGINX_INC_FOLDER
-echo "resolver ${DNS_RESOLVERS} valid=30s;" | tee $NGINX_INC_FOLDER/resolver.conf.inc
-echo "resolver_timeout 5s;" | tee -a $NGINX_INC_FOLDER/resolver.conf.inc
 
 LC_ALL=C
 ME=$( basename "$0" )
@@ -194,6 +192,17 @@ echo "worker_processes $ncpu;" | tee $NGINX_INC_FOLDER/worker_processes.conf.inc
 
 export PATH="/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH"
 export LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
+
+mkdir -p $NGINX_INC_FOLDER/ssl
+cp cat /etc/ssl/openssl.cnf /usr/local/ssl/openssl.cnf
+openssl \
+    req -x509 \
+    -nodes \
+    -subj "/CN=nginx.local" \
+    -addext "subjectAltName=DNS:www.nginx.local" \
+    -days 365 \
+    -newkey ec -pkeyopt ec_paramgen_curve:secp384r1 -keyout $NGINX_INC_FOLDER/ssl/self-signed.key \
+    -out $NGINX_INC_FOLDER/ssl/self-signed.crt
 
 # test env
 #echo -n "njs version is: "
