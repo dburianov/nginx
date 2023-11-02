@@ -48,7 +48,7 @@ RUN <<EOT
         gettext gnupg2 python3 jq ca-certificates gcc g++ \
         libssl-dev libgd-dev \
         libperl-dev gperf uthash-dev \
-        flex bison curl
+        flex bison curl libcurl4-openssl-dev
     wget https://go.dev/dl/go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz
     rm -rf /usr/local/go
     tar -C /usr/local -xzf go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz
@@ -81,7 +81,7 @@ RUN <<EOT
     git clone https://github.com/hnlq715/status-nginx-module.git /usr/src/status-nginx-module
     git clone --depth 1 -b ${MODSECURITY_VERSION} --single-branch https://github.com/SpiderLabs/ModSecurity /usr/src/ModSecurity
     git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/src/ModSecurity-nginx
-    git clone https://github.com/google/ngx_brotli /usr/src/ngx_brotli
+    git clone --recurse-submodules https://github.com/google/ngx_brotli /usr/src/ngx_brotli
     git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl
     git clone https://github.com/openresty/set-misc-nginx-module.git /usr/src/set-misc-nginx-module
     git clone https://github.com/chobits/ngx_http_proxy_connect_module.git /usr/src/ngx_http_proxy_connect_module
@@ -89,6 +89,16 @@ RUN <<EOT
     git clone --shallow-submodules --depth 1 --recurse-submodules -b ${OTEL_CPP_VERSION} \
       https://github.com/open-telemetry/opentelemetry-cpp.git /usr/src/opentelemetry-cpp
     git clone https://github.com/open-telemetry/opentelemetry-cpp-contrib.git /usr/src/opentelemetry-cpp-contrib
+    git clone https://github.com/FRiCKLE/ngx_cache_purge.git /usr/src/ngx_cache_purge
+    git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git /usr/src/ngx_http_substitutions_filter_module
+    git clone https://github.com/samizdatco/nginx-http-auth-digest.git /usr/src/nginx-http-auth-digest
+    git clone https://github.com/leev/ngx_http_geoip2_module.git /usr/src/ngx_http_geoip2_module
+    git clone https://github.com/yaoweibin/nginx_ajp_module.git /usr/src/nginx_ajp_module
+    git clone https://github.com/openresty/redis2-nginx-module.git /usr/src/redis2-nginx-module
+    git clone https://github.com/onnimonni/redis-nginx-module.git /usr/src/redis-nginx-module
+    git clone --recursive https://github.com/maxmind/libmaxminddb /usr/src/libmaxminddb
+    hg clone -r ${NGINX_VERSION} https://hg.nginx.org/nginx /usr/src/nginx
+    hg clone https://hg.nginx.org/njs /usr/src/njs
 EOT
 
 RUN <<EOT
@@ -116,6 +126,7 @@ EOT
 
 RUN <<EOT
     echo "Building boringssl ..."
+    set -e
     export PATH=$PATH:/usr/local/go/bin
     cd /usr/src/boringssl
     mkdir build
@@ -124,15 +135,20 @@ RUN <<EOT
 EOT
 
 RUN <<EOT
-    echo "Get Nginx and dependency sources"
+    echo "Building libmaxminddb ..."
     set -e
-    cd /usr/src/
-    #hg clone -b quic https://hg.nginx.org/nginx-quic /usr/src/nginx
-    hg clone -r ${NGINX_VERSION} https://hg.nginx.org/nginx /usr/src/nginx
-    hg clone https://hg.nginx.org/njs
-    echo "Init Nginx Brotli"
-    cd /usr/src/ngx_brotli
-    git submodule update --init
+    cd /usr/src/libmaxminddb
+    ./bootstrap
+    mkdir build && cd build
+    cmake ..
+    cmake --build .
+    ctest -V .
+    cmake --build . --target install
+EOT
+
+RUN <<EOT
+    echo "Get Nginx patches"
+    set -e
     echo "Get Openresty patches for Nginx"
     curl -s -o /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-resolver_conf_parsing.patch
     curl -s -o /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-reuseport_close_unused_fds.patch
@@ -166,6 +182,13 @@ RUN <<EOT
     ldconfig
     cp ./auto/configure .
     ./configure \
+        --prefix=/usr/local/nginx \
+        --modules-path=/usr/local/nginx/modules \
+        --lock-path=/tmp/nginx/nginx.lock \
+        --pid-path=/tmp/nginx/nginx.pid \
+        --conf-path=/usr/local/nginx/conf/nginx.conf \
+        --http-log-path=/dev/stdout \
+        --error-log-path=/dev/stderr \
         --http-client-body-temp-path=/tmp/nginx/client-body-temp \
         --http-proxy-temp-path=/tmp/nginx/proxy-temp \
         --http-fastcgi-temp-path=/tmp/nginx/fastcgi-temp \
@@ -201,7 +224,15 @@ RUN <<EOT
         --with-http_random_index_module \
         --with-http_gunzip_module \
         --with-http_v2_module \
+        --with-http_v3_module \
         --with-http_slice_module \
+        --with-threads \
+        --with-file-aio \
+        --without-mail_pop3_module \
+        --without-mail_smtp_module \
+        --without-mail_imap_module \
+        --without-http_uwsgi_module \
+        --without-http_scgi_module \
         --add-module=/usr/src/nginx_upstream_check_module \
         --add-module=/usr/src/nginx-rtmp-module \
         --add-module=/usr/src/ngx_devel_kit \
@@ -220,10 +251,14 @@ RUN <<EOT
         --add-module=/usr/src/ngx_brotli \
         --add-module=/usr/src/set-misc-nginx-module \
         --add-module=/usr/src/ngx_http_proxy_connect_module \
+        --add-module=/usr/src/ngx_cache_purge \
+        --add-module=/usr/src/ngx_http_substitutions_filter_module \
+        --add-module=/usr/src/nginx-http-auth-digest \
+        --add-module=/usr/src/ngx_http_geoip2_module \
+        --add-module=/usr/src/redis2-nginx-module \
         --with-cc-opt="-I/usr/src/boringssl/include" \
         --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
-        --build=quic-boringssl \
-        --with-http_v3_module
+        --build=quic-boringssl
     make -j $(nproc)
     make install
     cp -rf /usr/src/lua-resty-core/lib/* /usr/local/share/lua/5.1/
@@ -235,7 +270,6 @@ RUN <<EOT
     set -e
     cd /usr/src/njs
     ./configure 
-    #--cc-opt="-O2 -m64 -march=x86-64 -mfpmath=sse -msse4.2 -pipe -fPIC -fomit-frame-pointer"
     make -j $(nproc)
     #make unit_test
     install -m755 build/njs /usr/local/bin/
@@ -284,9 +318,6 @@ EOT
 RUN <<EOT
     echo "Compiling Opentelemetry for Nginx"
     set -e
-    # temporary fix
-    apt update
-    apt install -y libcurl4-openssl-dev
     cd /usr/src/opentelemetry-cpp-contrib
     git checkout ${OTEL_CONTRIB_VERSION}
     mkdir -p /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
@@ -352,12 +383,14 @@ ADD dhparams* /usr/local/nginx/conf.docker/ssl.dh/
 RUN <<EOT
     echo "Configuring libs and copy default configs"
     echo "/usr/local/nginx/lib/" > /etc/ld.so.conf.d/nginx.conf
-    echo "/usr/local/curl/lib" > /etc/ld.so.conf.d/curl.conf
     echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
     echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/openssl.conf
     ldconfig -v
     cp -rf /usr/local/nginx/conf.docker/* /usr/local/nginx/conf/
     chmod +x /docker-entrypoint.sh
+    echo 'alias curl="LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:/usr/local/curl/lib:$LD_LIBRARY_PATH curl"' | tee -a /root/.bashrc
+    cp /etc/ssl/openssl.cnf /usr/local/ssl/openssl.cnf
+    cp -f /usr/local/nginx/conf.docker/conf.d.inc/ocsp.conf.boringssl.inc /usr/local/nginx/conf.docker/conf.d.inc/ocsp.conf.inc
 EOT
 
 ENV LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
