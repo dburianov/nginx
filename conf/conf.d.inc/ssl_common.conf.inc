@@ -36,4 +36,4 @@ more_set_headers "Content-Security-Policy: default-src 'self';";
 more_set_headers "Strict-Transport-Security: max-age=63072000; includeSubDomains; preload";
 
 
-ssl_early_data  on;
+ssl_early_data on;

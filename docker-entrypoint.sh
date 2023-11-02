@@ -194,7 +194,7 @@ export PATH="/usr/local/nginx/sbin:/usr/local/ssl/bin:/usr/local/curl/bin:$PATH"
 export LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
 
 mkdir -p $NGINX_INC_FOLDER/ssl
-cp cat /etc/ssl/openssl.cnf /usr/local/ssl/openssl.cnf
+
 openssl \
     req -x509 \
     -nodes \
@@ -204,8 +204,6 @@ openssl \
     -newkey ec -pkeyopt ec_paramgen_curve:secp384r1 -keyout $NGINX_INC_FOLDER/ssl/self-signed.key \
     -out $NGINX_INC_FOLDER/ssl/self-signed.crt
 
-# test env
-#echo -n "njs version is: "
 /usr/local/nginx/sbin/nginx -t
 
 exec "$@"
