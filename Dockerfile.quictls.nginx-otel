@@ -258,12 +258,15 @@ RUN <<EOT
     cp -rf /usr/src/lua-resty-core/lib/* /usr/local/share/lua/5.1/
     cp -rf /usr/src/lua-resty-lrucache/lib/* /usr/local/share/lua/5.1/
 EOT
+#        --add-module=/usr/src/redis-nginx-module \
+#        --add-module=/usr/src/nginx_ajp_module \
 
 RUN <<EOT
     echo "Compiling njs"
     set -e
     cd /usr/src/njs
     ./configure 
+# --cc-opt="-O2 -m64 -march=x86-64 -mfpmath=sse -msse4.2 -pipe -fPIC -fomit-frame-pointer"
     make -j $(nproc)
     #make unit_test
     install -m755 build/njs /usr/local/bin/
@@ -326,11 +329,30 @@ RUN <<EOT
     make -j $(nproc)
     make install
 EOT
+RUN <<EOT
+    echo "Compiling Opentelemetry for Nginx (https://github.com/nginxinc/nginx-otel)"
+    set -e
+    ls -la /usr/src/nginx/objs
+    apt update
+    apt install -y pkg-config libc-ares-dev libre2-dev
+    cd /usr/src/
+    git clone https://github.com/nginxinc/nginx-otel.git
+    cd nginx-otel
+    mkdir build
+    cd build
+    cmake \
+        -DNGX_OTEL_NGINX_BUILD_DIR=/usr/src/nginx/objs \
+        ..
+    make -j $(nproc)
+    mv /usr/src/nginx-otel/build/ngx_otel_module.so /usr/local/nginx/modules/ngx_otel_module.so
+EOT
 
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/nginx/sbin/
+
 RUN <<EOT
     mkdir -p /usr/local/nginx/lib/
     ldd /usr/local/nginx/sbin/nginx |  cut -d ' ' -f 3 | grep '/' | xargs -i cp {} /usr/local/nginx/lib/
+    cp /usr/lib/x86_64-linux-gnu/libcares*.so* /usr/lib/x86_64-linux-gnu/libre2*.so* /usr/local/nginx/lib/
     strip \
         /usr/local/nginx/lib/*.so*
     rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
@@ -377,6 +399,7 @@ ADD dhparams* /usr/local/nginx/conf.docker/ssl.dh/
 RUN <<EOT
     echo "Configuring libs and copy default configs"
     echo "/usr/local/nginx/lib/" > /etc/ld.so.conf.d/nginx.conf
+    #    echo "/usr/local/curl/lib" > /etc/ld.so.conf.d/curl.conf
     echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
     echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/openssl.conf
     ldconfig -v
