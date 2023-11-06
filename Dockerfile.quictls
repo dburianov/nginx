@@ -157,13 +157,13 @@ RUN <<EOT
     set -e
     cd /usr/src/nginx
     echo "Apply nginx_upstream_check_module patch check"
-patch -p1 < /usr/src/nginx_upstream_check_module/check_1.20.1+.patch
+    patch -p1 < /usr/src/nginx_upstream_check_module/check_1.20.1+.patch
     echo "Apply nngx_http_proxy_connect_module patch"
-patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch
+    patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch
     echo "Apply patch from Openresty"
-patch -p1 < /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch
-patch -p1 < /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch
-patch -p1 < /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch
 EOT
 
 RUN <<EOT
@@ -199,8 +199,6 @@ RUN <<EOT
         --with-compat \
         --with-http_geoip_module \
         --with-http_image_filter_module \
-        --with-mail \
-        --with-mail_ssl_module \
         --with-google_perftools_module \
         --with-debug \
         --with-pcre-jit \
@@ -272,61 +270,61 @@ RUN <<EOT
 EOT
 
 RUN <<EOT
-echo "Compiling gRPC"
-set -e
-mkdir -p /usr/src/grpc/cmake/build
-cd /usr/src/grpc/cmake/build
-cmake \
--DgRPC_INSTALL=ON \
--DgRPC_BUILD_TESTS=OFF \
--DCMAKE_INSTALL_PREFIX=/install \
--DCMAKE_BUILD_TYPE=Release \
--DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF \
--DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF \
--DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF \
--DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF \
--DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF \
-../..
-make -j $(nproc)
-make install
+    echo "Compiling gRPC"
+    set -e
+    mkdir -p /usr/src/grpc/cmake/build
+    cd /usr/src/grpc/cmake/build
+    cmake \
+        -DgRPC_INSTALL=ON \
+        -DgRPC_BUILD_TESTS=OFF \
+        -DCMAKE_INSTALL_PREFIX=/install \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF \
+        ../..
+    make -j $(nproc)
+    make install
 EOT
 
 RUN <<EOT
-echo "Compiling Opentelemetry cpp"
-set -e
-mkdir -p /usr/src/opentelemetry-cpp/build
-cd /usr/src/opentelemetry-cpp/build
-cmake \
--DCMAKE_BUILD_TYPE=Release \
--DCMAKE_INSTALL_PREFIX=/install \
--DCMAKE_PREFIX_PATH=/install \
--DWITH_OTLP=ON \
--DWITH_OTLP_GRPC=ON \
--DWITH_OTLP_HTTP=OFF \
--DBUILD_TESTING=OFF \
--DWITH_EXAMPLES=OFF \
--DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-..
-make -j $(nproc)
-make install
+    echo "Compiling Opentelemetry cpp"
+    set -e
+    mkdir -p /usr/src/opentelemetry-cpp/build
+    cd /usr/src/opentelemetry-cpp/build
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/install \
+        -DCMAKE_PREFIX_PATH=/install \
+        -DWITH_OTLP=ON \
+        -DWITH_OTLP_GRPC=ON \
+        -DWITH_OTLP_HTTP=OFF \
+        -DBUILD_TESTING=OFF \
+        -DWITH_EXAMPLES=OFF \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        ..
+    make -j $(nproc)
+    make install
 EOT
 
 RUN <<EOT
-echo "Compiling Opentelemetry for Nginx"
-set -e
-cd /usr/src/opentelemetry-cpp-contrib
-git checkout ${OTEL_CONTRIB_VERSION}
-mkdir -p /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
-cd /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
-cmake \
--DNGINX_BIN=/usr/local/nginx/sbin/nginx \
--DCMAKE_BUILD_TYPE=Release \
--DCMAKE_PREFIX_PATH=/install \
--DCMAKE_INSTALL_PREFIX=/usr/local/nginx/modules \
--DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-..
-make -j $(nproc)
-make install
+    echo "Compiling Opentelemetry for Nginx"
+    set -e
+    cd /usr/src/opentelemetry-cpp-contrib
+    git checkout ${OTEL_CONTRIB_VERSION}
+    mkdir -p /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
+    cd /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
+    cmake \
+        -DNGINX_BIN=/usr/local/nginx/sbin/nginx \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_PREFIX_PATH=/install \
+        -DCMAKE_INSTALL_PREFIX=/usr/local/nginx/modules \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        ..
+    make -j $(nproc)
+    make install
 EOT
 
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/nginx/sbin/
