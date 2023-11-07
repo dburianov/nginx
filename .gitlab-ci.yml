@@ -47,7 +47,6 @@ docker_modsecurity_build:
       DOCKER_REPO: "dburianov/modsecurity_rules"
     extends: .build_script
 
-
 # new nginx build
 docker_build:
     stage: docker_build
