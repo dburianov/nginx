@@ -48,6 +48,7 @@ docker_modsecurity_build:
     extends: .build_script
 
 # new nginx build
+# renun
 docker_build:
     stage: docker_build
     variables:
