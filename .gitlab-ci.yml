@@ -49,6 +49,7 @@ setvars-job:
 
 # new nginx build
 # renun 2 time
+# run
 docker_build:
     stage: docker_build
     variables:
