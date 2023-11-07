@@ -1,0 +1,68 @@
+FROM nginx_quictls_build AS nginx_quictls_build_otel-nginx
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ARG TARGETARCH
+ENV DEBIAN_FRONTEND noninteractive
+ENV GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.3
+
+RUN <<EOT
+    echo "Compiling gRPC"
+    set -e
+    mkdir -p /usr/src/grpc/cmake/build
+    cd /usr/src/grpc/cmake/build
+    cmake \
+        -DgRPC_INSTALL=ON \
+        -DgRPC_BUILD_TESTS=OFF \
+        -DCMAKE_INSTALL_PREFIX=/install \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF \
+        ../..
+    make -j $(nproc)
+    make install
+EOT
+
+RUN <<EOT
+    echo "Compiling Opentelemetry cpp"
+    set -e
+    mkdir -p /usr/src/opentelemetry-cpp/build
+    cd /usr/src/opentelemetry-cpp/build
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/install \
+        -DCMAKE_PREFIX_PATH=/install \
+        -DWITH_OTLP=ON \
+        -DWITH_OTLP_GRPC=ON \
+        -DWITH_OTLP_HTTP=OFF \
+        -DBUILD_TESTING=OFF \
+        -DWITH_EXAMPLES=OFF \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        ..
+    make -j $(nproc)
+    make install
+EOT
+
+RUN <<EOT
+    echo "Compiling Opentelemetry for Nginx"
+    set -e
+    cd /usr/src/opentelemetry-cpp-contrib
+    git checkout ${OTEL_CONTRIB_VERSION}
+    mkdir -p /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
+    cd /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
+    cmake \
+        -DNGINX_BIN=/usr/local/nginx/sbin/nginx \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_PREFIX_PATH=/install \
+        -DCMAKE_INSTALL_PREFIX=/usr/local/nginx/modules \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        ..
+    make -j $(nproc)
+    make install
+    ls -la /usr/local/nginx/modules/
+EOT

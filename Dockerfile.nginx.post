@@ -1,0 +1,21 @@
+ARG SSL
+FROM nginx_${SSL}_build
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ARG TARGETARCH
+ENV DEBIAN_FRONTEND noninteractive
+ENV GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.3
+
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/nginx/sbin/
+
+RUN <<EOT
+    mkdir -p /usr/local/nginx/lib/
+    ldd /usr/local/nginx/sbin/nginx |  cut -d ' ' -f 3 | grep '/' | xargs -i cp {} /usr/local/nginx/lib/
+    cp /usr/lib/x86_64-linux-gnu/libcares*.so* /usr/lib/x86_64-linux-gnu/libre2*.so* /usr/local/nginx/lib/
+    strip \
+        /usr/local/nginx/lib/*.so*
+    rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
+EOT

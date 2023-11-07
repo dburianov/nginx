@@ -1,0 +1,51 @@
+FROM nginx_ubuntu AS nginx_ubuntu-git
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ARG TARGETARCH
+ENV DEBIAN_FRONTEND noninteractive
+ENV GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.3
+
+RUN <<EOT
+    echo "git clone"
+    set -e
+    git clone https://github.com/openresty/luajit2.git /usr/src/luajit-2.0
+    git clone https://github.com/simpl/ngx_devel_kit.git /usr/src/ngx_devel_kit
+    git clone https://github.com/openresty/lua-nginx-module.git /usr/src/lua-nginx-module
+    git clone https://github.com/openresty/echo-nginx-module.git /usr/src/echo-nginx-module
+    git clone https://github.com/vozlt/nginx-module-vts.git /usr/src/nginx-module-vts
+    git clone https://github.com/vozlt/nginx-module-stream-sts.git /usr/src/nginx-module-stream-sts
+    git clone https://github.com/vozlt/nginx-module-sts.git /usr/src/nginx-module-sts
+    git clone https://github.com/kaltura/nginx-vod-module.git /usr/src/nginx-vod-module
+    git clone https://github.com/arut/nginx-rtmp-module.git /usr/src/nginx-rtmp-module
+    git clone https://github.com/arut/nginx-ts-module.git /usr/src/nginx-ts-module
+    git clone https://github.com/openresty/headers-more-nginx-module.git /usr/src/headers-more-nginx-module
+    git clone https://github.com/openresty/lua-upstream-nginx-module.git /usr/src/lua-upstream-nginx-module
+    git clone https://github.com/yaoweibin/nginx_upstream_check_module /usr/src/nginx_upstream_check_module
+    git clone https://github.com/openresty/lua-resty-core.git /usr/src/lua-resty-core
+    git clone https://github.com/openresty/lua-resty-lrucache.git /usr/src/lua-resty-lrucache
+    git clone https://github.com/hnlq715/status-nginx-module.git /usr/src/status-nginx-module
+    git clone --depth 1 -b ${MODSECURITY_VERSION} --single-branch https://github.com/SpiderLabs/ModSecurity /usr/src/ModSecurity
+    git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/src/ModSecurity-nginx
+    git clone --recurse-submodules https://github.com/google/ngx_brotli /usr/src/ngx_brotli
+    git clone https://github.com/quictls/openssl.git /usr/src/openssl
+    git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl
+    git clone https://github.com/openresty/set-misc-nginx-module.git /usr/src/set-misc-nginx-module
+    git clone https://github.com/chobits/ngx_http_proxy_connect_module.git /usr/src/ngx_http_proxy_connect_module
+    git clone --shallow-submodules --depth 1 --recurse-submodules -b ${GRPC_VERSION} https://github.com/grpc/grpc.git /usr/src/grpc
+    git clone --shallow-submodules --depth 1 --recurse-submodules -b ${OTEL_CPP_VERSION} \
+      https://github.com/open-telemetry/opentelemetry-cpp.git /usr/src/opentelemetry-cpp
+    git clone https://github.com/open-telemetry/opentelemetry-cpp-contrib.git /usr/src/opentelemetry-cpp-contrib
+    git clone https://github.com/FRiCKLE/ngx_cache_purge.git /usr/src/ngx_cache_purge
+    git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git /usr/src/ngx_http_substitutions_filter_module
+    git clone https://github.com/samizdatco/nginx-http-auth-digest.git /usr/src/nginx-http-auth-digest
+    git clone https://github.com/leev/ngx_http_geoip2_module.git /usr/src/ngx_http_geoip2_module
+    git clone https://github.com/yaoweibin/nginx_ajp_module.git /usr/src/nginx_ajp_module
+    git clone https://github.com/openresty/redis2-nginx-module.git /usr/src/redis2-nginx-module
+    git clone https://github.com/onnimonni/redis-nginx-module.git /usr/src/redis-nginx-module
+    git clone --recursive https://github.com/maxmind/libmaxminddb /usr/src/libmaxminddb
+    hg clone -r ${NGINX_VERSION} https://hg.nginx.org/nginx /usr/src/nginx
+    hg clone https://hg.nginx.org/njs /usr/src/njs
+EOT

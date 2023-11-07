@@ -1,0 +1,53 @@
+FROM nginx_ubuntu_git AS nginx_ubuntu_pre_pack
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ARG TARGETARCH
+ENV DEBIAN_FRONTEND noninteractive
+ENV GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.3
+
+RUN <<EOT
+    echo "Compiling luajit"
+    set -e
+    cd /usr/src/luajit-2.0
+    make -j $(nproc)
+    make install
+    export LUAJIT_LIB=/usr/local/lib
+    export LUAJIT_INC=/usr/local/include/luajit-2.1
+    ldconfig
+EOT
+
+RUN <<EOT
+    echo "Compiling ModSecurity"
+    set -e
+    cd /usr/src/ModSecurity
+    git submodule init
+    git submodule update
+    ./build.sh
+    ./configure
+    make -j $(nproc)
+    make install
+EOT
+
+RUN <<EOT
+    echo "Building libmaxminddb ..."
+    set -e
+    cd /usr/src/libmaxminddb
+    ./bootstrap
+    mkdir build && cd build
+    cmake ..
+    cmake --build .
+    ctest -V .
+    cmake --build . --target install
+EOT
+
+RUN <<EOT
+    echo "Compiling njs"
+    set -e
+    cd /usr/src/njs
+    ./configure 
+    make -j $(nproc)
+    install -m755 build/njs /usr/local/bin/
+EOT

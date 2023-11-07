@@ -1,0 +1,47 @@
+FROM dburianov/ubuntu:latest AS nginx_ubuntu-git
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ARG TARGETARCH
+ENV DEBIAN_FRONTEND noninteractive
+ENV GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.3 \
+    GOLANG_VERSION=1.21.3
+
+RUN <<EOT
+    echo "apt update"
+    set -e
+    apt -yqq update
+EOT
+RUN <<EOT
+    set -e
+    apt install -y --no-install-recommends --no-install-suggests \
+        git unzip libxml2-dev \
+        libbz2-dev libmcrypt-dev libmhash2 \
+        libmhash-dev libpcre3 libpcre3-dev libpcre++-dev make build-essential \
+        libxslt-dev libxslt1-dev libgeoip-dev \
+        libpam-dev libgoogle-perftools-dev lua5.1 liblua5.1-0 \
+        liblua5.1-0-dev checkinstall wget \
+        mercurial meld \
+        autoconf automake cmake libtool \
+        texinfo zlib1g-dev pkgconf libyajl-dev liblmdb-dev \
+        gettext gnupg2 python3 jq ca-certificates gcc g++ \
+        libssl-dev libgd-dev \
+        libperl-dev gperf uthash-dev \
+        flex bison curl libcurl4-openssl-dev
+
+    apt install -y --no-install-recommends --no-install-suggests \
+        pkg-config libc-ares-dev libre2-dev \
+        lua-socket lua-zlib
+
+    wget https://go.dev/dl/go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz
+    rm -rf /usr/local/go
+    tar -C /usr/local -xzf go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz
+    rm -rf go$GOLANG_VERSION.linux-$TARGETARCH.tar.gz \
+           /var/lib/apt/lists/* \
+           /usr/share/doc/* \
+           /usr/share/man/*
+    apt-get autoremove -y
+    apt-get clean -y
+EOT

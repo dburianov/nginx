@@ -1,0 +1,102 @@
+FROM nginx_quictls_patches AS nginx_quictls_build
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ARG TARGETARCH
+ENV DEBIAN_FRONTEND noninteractive
+ENV GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.3
+
+RUN <<EOT
+    echo "Compiling Nginx"
+    set -e
+    cd /usr/src/nginx
+    export ASAN_OPTIONS=detect_leaks=0
+    export CFLAGS="-Wno-error"
+    export LUAJIT_LIB=/usr/local/lib
+    export LUAJIT_INC=/usr/local/include/luajit-2.1
+    ldconfig
+    cp ./auto/configure .
+    ./configure \
+        --prefix=/usr/local/nginx \
+        --modules-path=/usr/local/nginx/modules \
+        --lock-path=/tmp/nginx/nginx.lock \
+        --pid-path=/tmp/nginx/nginx.pid \
+        --conf-path=/usr/local/nginx/conf/nginx.conf \
+        --http-log-path=/dev/stdout \
+        --error-log-path=/dev/stderr \
+        --http-client-body-temp-path=/tmp/nginx/client-body-temp \
+        --http-proxy-temp-path=/tmp/nginx/proxy-temp \
+        --http-fastcgi-temp-path=/tmp/nginx/fastcgi-temp \
+        --http-uwsgi-temp-path=/tmp/nginx/uwsgi-temp \
+        --http-scgi-temp-path=/tmp/nginx/scgi-temp \
+        --with-http_xslt_module \
+        --with-http_ssl_module \
+        --with-http_mp4_module \
+        --with-http_flv_module \
+        --with-http_secure_link_module \
+        --with-http_dav_module \
+        --with-http_auth_request_module \
+        --with-compat \
+        --with-http_geoip_module \
+        --with-http_image_filter_module \
+        --with-google_perftools_module \
+        --with-debug \
+        --with-pcre-jit \
+        --without-pcre2 \
+        --with-ipv6 \
+        --with-http_stub_status_module \
+        --with-http_realip_module \
+        --with-http_addition_module \
+        --with-http_gzip_static_module \
+        --with-http_sub_module \
+        --with-stream \
+        --with-stream_geoip_module \
+        --with-stream_realip_module \
+        --with-stream_ssl_module \
+        --with-stream_ssl_preread_module \
+        --with-http_random_index_module \
+        --with-http_gunzip_module \
+        --with-http_v2_module \
+        --with-http_v3_module \
+        --with-http_slice_module \
+        --with-threads \
+        --with-file-aio \
+        --without-mail_pop3_module \
+        --without-mail_smtp_module \
+        --without-mail_imap_module \
+        --without-http_uwsgi_module \
+        --without-http_scgi_module \
+        --add-module=/usr/src/nginx_upstream_check_module \
+        --add-module=/usr/src/nginx-rtmp-module \
+        --add-module=/usr/src/ngx_devel_kit \
+        --add-module=/usr/src/lua-nginx-module \
+        --add-module=/usr/src/echo-nginx-module \
+        --add-module=/usr/src/nginx-ts-module \
+        --add-module=/usr/src/nginx-module-vts \
+        --add-module=/usr/src/nginx-module-stream-sts \
+        --add-module=/usr/src/nginx-module-sts \
+        --add-module=/usr/src/nginx-vod-module \
+        --add-module=/usr/src/njs/nginx \
+        --add-module=/usr/src/ModSecurity-nginx \
+        --add-module=/usr/src/headers-more-nginx-module \
+        --add-module=/usr/src/lua-upstream-nginx-module \
+        --add-module=/usr/src/status-nginx-module \
+        --add-module=/usr/src/ngx_brotli \
+        --add-module=/usr/src/set-misc-nginx-module \
+        --add-module=/usr/src/ngx_http_proxy_connect_module \
+        --add-module=/usr/src/ngx_cache_purge \
+        --add-module=/usr/src/ngx_http_substitutions_filter_module \
+        --add-module=/usr/src/nginx-http-auth-digest \
+        --add-module=/usr/src/ngx_http_geoip2_module \
+        --add-module=/usr/src/redis2-nginx-module \
+        --with-cc-opt="-I/usr/src/ssl/include" \
+        --with-ld-opt="-L/usr/src/ssl/lib" \
+        --with-openssl=/usr/src/openssl \
+        --build=quictls
+    make -j $(nproc)
+    make install
+    cp -rf /usr/src/lua-resty-core/lib/* /usr/local/share/lua/5.1/
+    cp -rf /usr/src/lua-resty-lrucache/lib/* /usr/local/share/lua/5.1/
+EOT

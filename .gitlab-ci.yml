@@ -46,45 +46,23 @@ docker_modsecurity_build:
       DOCKER_REPO: "dburianov/modsecurity_rules"
     extends: .build_script
 
-docker_boringssl_build:
+docker_build:
     stage: docker_build
     variables:
-      TAG_SSL: $AMD_TAG-boringssl
+      TAG_SSL: $AMD_TAG
       ARCH: $AMD_ARCH
-      DOCKERFILE_SUFIX: boringssl
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
-    extends: .build_script
+    extends: .build_script_v2
 
-docker_boringssl_arm64_build:
+docker_arm64_build:
     stage: docker_build
     tags:
     - arm64
     variables:
-      TAG_SSL: $ARM_TAG-boringssl
+      TAG_SSL: $ARM_TAG
       ARCH: $ARM_ARCH
-      DOCKERFILE_SUFIX: boringssl
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
-    extends: .build_script
-
-docker_quictls_build:
-    stage: docker_build
-    variables:
-      TAG_SSL: $AMD_TAG-quictls
-      ARCH: $AMD_ARCH
-      DOCKERFILE_SUFIX: "quictls"
-      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
-    extends: .build_script
-
-docker_quictls_arm64_build:
-    stage: docker_build
-    tags:
-    - arm64
-    variables:
-      TAG_SSL: $ARM_TAG-quictls
-      ARCH: $ARM_ARCH
-      DOCKERFILE_SUFIX: "quictls"
-      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
-    extends: .build_script
+    extends: .build_script_v2
 
 # run tests
 docker_nginx_boringssl_test:

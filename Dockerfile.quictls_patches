@@ -1,0 +1,33 @@
+FROM nginx_quictls_lib AS nginx_quictls_patches
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+
+ARG TARGETARCH
+ENV DEBIAN_FRONTEND noninteractive
+ENV GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.3
+
+RUN <<EOT
+    echo "Get Nginx patches"
+    set -e
+    echo "Get Openresty patches for Nginx"
+    curl -s -o /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-resolver_conf_parsing.patch
+    curl -s -o /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-reuseport_close_unused_fds.patch
+    curl -s -o /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-log_escape_non_ascii.patch
+EOT
+
+RUN <<EOT
+    echo "Apply Nginx patches"
+    set -e
+    cd /usr/src/nginx
+    echo "Apply nginx_upstream_check_module patch check"
+    patch -p1 < /usr/src/nginx_upstream_check_module/check_1.20.1+.patch
+    echo "Apply nngx_http_proxy_connect_module patch"
+    patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch
+    echo "Apply patch from Openresty"
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch
+EOT
