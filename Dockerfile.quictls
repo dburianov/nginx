@@ -1,0 +1,402 @@
+FROM dburianov/ubuntu:latest AS ubuntu_core
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ENV DEBIAN_FRONTEND noninteractive
+ENV TZ=Europe/London
+RUN <<EOT
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+    echo $TZ > /etc/timezone
+EOT
+
+RUN <<EOT
+    apt-get -yqq update
+    apt-get install -y --no-install-recommends --no-install-suggests \
+        lua-socket lua-zlib
+    rm -rf /var/lib/apt/lists/* \
+           /usr/share/doc/* \
+           /usr/share/man/*
+    apt-get autoremove -y
+    apt-get clean -y
+EOT
+
+FROM ubuntu_core AS ubuntu-build
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ARG TARGETARCH
+ENV DEBIAN_FRONTEND noninteractive
+ENV GRPC_VERSION=v1.49.2 \
+    OTEL_CPP_VERSION=v1.8.1 \
+    OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
+    MODSECURITY_VERSION=v3/master \
+    NGINX_VERSION=release-1.25.3
+
+RUN <<EOT
+    echo "apt update"
+    set -e
+    apt -yqq update
+EOT
+RUN <<EOT
+    apt install -y --no-install-recommends --no-install-suggests \
+        git unzip libxml2-dev \
+        libbz2-dev libmcrypt-dev libmhash2 \
+        libmhash-dev libpcre3 libpcre3-dev libpcre++-dev make build-essential \
+        libxslt-dev libxslt1-dev libgeoip-dev \
+        libpam-dev libgoogle-perftools-dev lua5.1 liblua5.1-0 \
+        liblua5.1-0-dev checkinstall wget \
+        mercurial meld \
+        autoconf automake cmake libtool \
+        texinfo zlib1g-dev pkgconf libyajl-dev liblmdb-dev \
+        gettext gnupg2 python3 jq ca-certificates gcc g++ \
+        libssl-dev libgd-dev \
+        libperl-dev gperf uthash-dev \
+        flex bison curl libcurl4-openssl-dev
+    rm -rf /var/lib/apt/lists/* \
+           /usr/share/doc/* \
+           /usr/share/man/*
+    apt-get autoremove -y
+    apt-get clean -y
+EOT
+
+RUN <<EOT
+    echo "git clone"
+    set -e
+    git clone https://github.com/openresty/luajit2.git /usr/src/luajit-2.0
+    git clone https://github.com/simpl/ngx_devel_kit.git /usr/src/ngx_devel_kit
+    git clone https://github.com/openresty/lua-nginx-module.git /usr/src/lua-nginx-module
+    git clone https://github.com/openresty/echo-nginx-module.git /usr/src/echo-nginx-module
+    git clone https://github.com/vozlt/nginx-module-vts.git /usr/src/nginx-module-vts
+    git clone https://github.com/vozlt/nginx-module-stream-sts.git /usr/src/nginx-module-stream-sts
+    git clone https://github.com/vozlt/nginx-module-sts.git /usr/src/nginx-module-sts
+    git clone https://github.com/kaltura/nginx-vod-module.git /usr/src/nginx-vod-module
+    git clone https://github.com/arut/nginx-rtmp-module.git /usr/src/nginx-rtmp-module
+    git clone https://github.com/arut/nginx-ts-module.git /usr/src/nginx-ts-module
+    git clone https://github.com/openresty/headers-more-nginx-module.git /usr/src/headers-more-nginx-module
+    git clone https://github.com/openresty/lua-upstream-nginx-module.git /usr/src/lua-upstream-nginx-module
+    git clone https://github.com/yaoweibin/nginx_upstream_check_module /usr/src/nginx_upstream_check_module
+    git clone https://github.com/openresty/lua-resty-core.git /usr/src/lua-resty-core
+    git clone https://github.com/openresty/lua-resty-lrucache.git /usr/src/lua-resty-lrucache
+    git clone https://github.com/hnlq715/status-nginx-module.git /usr/src/status-nginx-module
+    git clone --depth 1 -b ${MODSECURITY_VERSION} --single-branch https://github.com/SpiderLabs/ModSecurity /usr/src/ModSecurity
+    git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git /usr/src/ModSecurity-nginx
+    git clone --recurse-submodules https://github.com/google/ngx_brotli /usr/src/ngx_brotli
+    git clone https://github.com/quictls/openssl.git /usr/src/openssl
+    git clone https://github.com/openresty/set-misc-nginx-module.git /usr/src/set-misc-nginx-module
+    git clone https://github.com/chobits/ngx_http_proxy_connect_module.git /usr/src/ngx_http_proxy_connect_module
+    git clone --shallow-submodules --depth 1 --recurse-submodules -b ${GRPC_VERSION} https://github.com/grpc/grpc.git /usr/src/grpc
+    git clone --shallow-submodules --depth 1 --recurse-submodules -b ${OTEL_CPP_VERSION} \
+      https://github.com/open-telemetry/opentelemetry-cpp.git /usr/src/opentelemetry-cpp
+    git clone https://github.com/open-telemetry/opentelemetry-cpp-contrib.git /usr/src/opentelemetry-cpp-contrib
+    git clone https://github.com/FRiCKLE/ngx_cache_purge.git /usr/src/ngx_cache_purge
+    git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git /usr/src/ngx_http_substitutions_filter_module
+    git clone https://github.com/samizdatco/nginx-http-auth-digest.git /usr/src/nginx-http-auth-digest
+    git clone https://github.com/leev/ngx_http_geoip2_module.git /usr/src/ngx_http_geoip2_module
+    git clone https://github.com/yaoweibin/nginx_ajp_module.git /usr/src/nginx_ajp_module
+    git clone https://github.com/openresty/redis2-nginx-module.git /usr/src/redis2-nginx-module
+    git clone https://github.com/onnimonni/redis-nginx-module.git /usr/src/redis-nginx-module
+    git clone --recursive https://github.com/maxmind/libmaxminddb /usr/src/libmaxminddb
+    hg clone -r ${NGINX_VERSION} https://hg.nginx.org/nginx /usr/src/nginx
+    hg clone https://hg.nginx.org/njs /usr/src/njs
+EOT
+
+RUN <<EOT
+    echo "Compiling luajit"
+    set -e
+    cd /usr/src/luajit-2.0
+    make -j $(nproc)
+    make install
+    export LUAJIT_LIB=/usr/local/lib
+    export LUAJIT_INC=/usr/local/include/luajit-2.1
+    ldconfig
+EOT
+
+RUN <<EOT
+    echo "Compiling ModSecurity"
+    set -e
+    cd /usr/src/ModSecurity
+    git submodule init
+    git submodule update
+    ./build.sh
+    ./configure
+    make -j $(nproc)
+    make install
+EOT
+
+RUN <<EOT
+    echo "Compiling openssl"
+    set -e
+    cd /usr/src/openssl
+    ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib enable-quic
+    make -j $(nproc) build_sw
+    make install_sw
+    echo "/usr/local/ssl/lib" > /etc/ld.so.conf.d/openssl.conf
+    echo "/usr/local/ssl/lib64" >> /etc/ld.so.conf.d/openssl.conf
+    ldconfig -v
+EOT
+
+RUN <<EOT
+    echo "Building libmaxminddb ..."
+    set -e
+    cd /usr/src/libmaxminddb
+    ./bootstrap
+    mkdir build && cd build
+    cmake ..
+    cmake --build .
+    ctest -V .
+    cmake --build . --target install
+EOT
+
+RUN <<EOT
+    echo "Get Nginx patches"
+    set -e
+    echo "Get Openresty patches for Nginx"
+    curl -s -o /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-resolver_conf_parsing.patch
+    curl -s -o /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-reuseport_close_unused_fds.patch
+    curl -s -o /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-log_escape_non_ascii.patch
+EOT
+
+RUN <<EOT
+    echo "Apply Nginx patches"
+    set -e
+    cd /usr/src/nginx
+    echo "Apply nginx_upstream_check_module patch check"
+    patch -p1 < /usr/src/nginx_upstream_check_module/check_1.20.1+.patch
+    echo "Apply nngx_http_proxy_connect_module patch"
+    patch -p1 < /usr/src/ngx_http_proxy_connect_module/patch/proxy_connect_rewrite_102101.patch
+    echo "Apply patch from Openresty"
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch
+    patch -p1 < /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch
+EOT
+
+RUN <<EOT
+    echo "Compiling Nginx"
+    set -e
+    cd /usr/src/nginx
+    export ASAN_OPTIONS=detect_leaks=0
+    export CFLAGS="-Wno-error"
+    export LUAJIT_LIB=/usr/local/lib
+    export LUAJIT_INC=/usr/local/include/luajit-2.1
+    ldconfig
+    cp ./auto/configure .
+    ./configure \
+        --prefix=/usr/local/nginx \
+        --modules-path=/usr/local/nginx/modules \
+        --lock-path=/tmp/nginx/nginx.lock \
+        --pid-path=/tmp/nginx/nginx.pid \
+        --conf-path=/usr/local/nginx/conf/nginx.conf \
+        --http-log-path=/dev/stdout \
+        --error-log-path=/dev/stderr \
+        --http-client-body-temp-path=/tmp/nginx/client-body-temp \
+        --http-proxy-temp-path=/tmp/nginx/proxy-temp \
+        --http-fastcgi-temp-path=/tmp/nginx/fastcgi-temp \
+        --http-uwsgi-temp-path=/tmp/nginx/uwsgi-temp \
+        --http-scgi-temp-path=/tmp/nginx/scgi-temp \
+        --with-http_xslt_module \
+        --with-http_ssl_module \
+        --with-http_mp4_module \
+        --with-http_flv_module \
+        --with-http_secure_link_module \
+        --with-http_dav_module \
+        --with-http_auth_request_module \
+        --with-compat \
+        --with-http_geoip_module \
+        --with-http_image_filter_module \
+        --with-google_perftools_module \
+        --with-debug \
+        --with-pcre-jit \
+        --without-pcre2 \
+        --with-ipv6 \
+        --with-http_stub_status_module \
+        --with-http_realip_module \
+        --with-http_addition_module \
+        --with-http_gzip_static_module \
+        --with-http_sub_module \
+        --with-stream \
+        --with-stream_geoip_module \
+        --with-stream_realip_module \
+        --with-stream_ssl_module \
+        --with-stream_ssl_preread_module \
+        --with-http_random_index_module \
+        --with-http_gunzip_module \
+        --with-http_v2_module \
+        --with-http_v3_module \
+        --with-http_slice_module \
+        --with-threads \
+        --with-file-aio \
+        --without-mail_pop3_module \
+        --without-mail_smtp_module \
+        --without-mail_imap_module \
+        --without-http_uwsgi_module \
+        --without-http_scgi_module \
+        --add-module=/usr/src/nginx_upstream_check_module \
+        --add-module=/usr/src/nginx-rtmp-module \
+        --add-module=/usr/src/ngx_devel_kit \
+        --add-module=/usr/src/lua-nginx-module \
+        --add-module=/usr/src/echo-nginx-module \
+        --add-module=/usr/src/nginx-ts-module \
+        --add-module=/usr/src/nginx-module-vts \
+        --add-module=/usr/src/nginx-module-stream-sts \
+        --add-module=/usr/src/nginx-module-sts \
+        --add-module=/usr/src/nginx-vod-module \
+        --add-module=/usr/src/njs/nginx \
+        --add-module=/usr/src/ModSecurity-nginx \
+        --add-module=/usr/src/headers-more-nginx-module \
+        --add-module=/usr/src/lua-upstream-nginx-module \
+        --add-module=/usr/src/status-nginx-module \
+        --add-module=/usr/src/ngx_brotli \
+        --add-module=/usr/src/set-misc-nginx-module \
+        --add-module=/usr/src/ngx_http_proxy_connect_module \
+        --add-module=/usr/src/ngx_cache_purge \
+        --add-module=/usr/src/ngx_http_substitutions_filter_module \
+        --add-module=/usr/src/nginx-http-auth-digest \
+        --add-module=/usr/src/ngx_http_geoip2_module \
+        --add-module=/usr/src/redis2-nginx-module \
+        --with-cc-opt="-I/usr/src/ssl/include" \
+        --with-ld-opt="-L/usr/src/ssl/lib" \
+        --with-openssl=/usr/src/openssl \
+        --build=quictls
+    make -j $(nproc)
+    make install
+    cp -rf /usr/src/lua-resty-core/lib/* /usr/local/share/lua/5.1/
+    cp -rf /usr/src/lua-resty-lrucache/lib/* /usr/local/share/lua/5.1/
+EOT
+
+RUN <<EOT
+    echo "Compiling njs"
+    set -e
+    cd /usr/src/njs
+    ./configure
+    make -j $(nproc)
+    #make unit_test
+    install -m755 build/njs /usr/local/bin/
+EOT
+
+RUN <<EOT
+    echo "Compiling gRPC"
+    set -e
+    mkdir -p /usr/src/grpc/cmake/build
+    cd /usr/src/grpc/cmake/build
+    cmake \
+        -DgRPC_INSTALL=ON \
+        -DgRPC_BUILD_TESTS=OFF \
+        -DCMAKE_INSTALL_PREFIX=/install \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DgRPC_BUILD_GRPC_NODE_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_PHP_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_PYTHON_PLUGIN=OFF \
+        -DgRPC_BUILD_GRPC_RUBY_PLUGIN=OFF \
+        ../..
+    make -j $(nproc)
+    make install
+EOT
+
+RUN <<EOT
+    echo "Compiling Opentelemetry cpp"
+    set -e
+    mkdir -p /usr/src/opentelemetry-cpp/build
+    cd /usr/src/opentelemetry-cpp/build
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/install \
+        -DCMAKE_PREFIX_PATH=/install \
+        -DWITH_OTLP=ON \
+        -DWITH_OTLP_GRPC=ON \
+        -DWITH_OTLP_HTTP=OFF \
+        -DBUILD_TESTING=OFF \
+        -DWITH_EXAMPLES=OFF \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        ..
+    make -j $(nproc)
+    make install
+EOT
+
+RUN <<EOT
+    echo "Compiling Opentelemetry for Nginx"
+    set -e
+    cd /usr/src/opentelemetry-cpp-contrib
+    git checkout ${OTEL_CONTRIB_VERSION}
+    mkdir -p /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
+    cd /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/build
+    cmake \
+        -DNGINX_BIN=/usr/local/nginx/sbin/nginx \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_PREFIX_PATH=/install \
+        -DCMAKE_INSTALL_PREFIX=/usr/local/nginx/modules \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        ..
+    make -j $(nproc)
+    make install
+EOT
+
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/nginx/sbin/
+RUN <<EOT
+    mkdir -p /usr/local/nginx/lib/
+    ldd /usr/local/nginx/sbin/nginx |  cut -d ' ' -f 3 | grep '/' | xargs -i cp {} /usr/local/nginx/lib/
+    strip \
+        /usr/local/nginx/lib/*.so*
+    rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
+EOT
+
+FROM dburianov/modsecurity_rules:latest AS modsecurity_rules
+FROM dburianov/geoip:latest AS geoip
+FROM dburianov/curl:latest AS curl
+FROM dburianov/openssl:latest AS openssl
+FROM ubuntu_core AS nginx-release
+
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ARG CACHEBUST=0
+
+RUN <<EOT
+    mkdir -p /usr/local/nginx/logs \
+             /usr/local/nginx/conf.docker/ssl.dh/ \
+             /usr/local/nginx/lua.docker \
+             /usr/local/nginx/geoip \
+             /usr/local/nginx/conf/ \
+             /tmp/modsecurity/tmp \
+             /tmp/modsecurity/data \
+             /tmp/modsecurity/upload \
+             /tmp/nginx
+    touch /usr/local/nginx/logs/access.log /usr/local/nginx/logs/error.log
+    ln -sf /dev/stdout /usr/local/nginx/logs/access.log
+    ln -sf /dev/stderr /usr/local/nginx/logs/error.log
+EOT
+
+COPY --from=ubuntu-build /usr/local /usr/local/
+COPY --from=modsecurity_rules /usr/local/modsecurity /usr/local/modsecurity
+COPY --from=ubuntu-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecurity/unicode.mapping
+COPY --from=ubuntu-build /usr/bin/envsubst /usr/bin/envsubst
+COPY --from=ubuntu-build /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
+COPY --from=geoip /geoip /usr/local/nginx/geoip
+COPY --from=curl /usr/local/curl/ /usr/local/curl/
+COPY --from=curl /usr/local/bin/httpstat.sh /usr/local/bin/httpstat.sh
+COPY --from=openssl /usr/local/ssl/ /usr/local/ssl/
+
+ADD docker-entrypoint.sh /docker-entrypoint.sh
+ADD conf /usr/local/nginx/conf.docker
+ADD lua /usr/local/nginx/lua.docker
+ADD dhparams* /usr/local/nginx/conf.docker/ssl.dh/
+RUN <<EOT
+    echo "Configuring libs and copy default configs"
+    echo "/usr/local/nginx/lib/" > /etc/ld.so.conf.d/nginx.conf
+    #    echo "/usr/local/curl/lib" > /etc/ld.so.conf.d/curl.conf
+    echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
+    echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/openssl.conf
+    ldconfig -v
+    cp -rf /usr/local/nginx/conf.docker/* /usr/local/nginx/conf/
+    rm -rf /usr/bin/c_rehash /usr/bin/openssl /usr/local/ssl/share/*
+    chmod +x /docker-entrypoint.sh
+    echo 'alias curl="LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:/usr/local/curl/lib:$LD_LIBRARY_PATH curl"' | tee -a /root/.bashrc
+    cp /etc/ssl/openssl.cnf /usr/local/ssl/openssl.cnf
+    cp -f /usr/local/nginx/conf.docker/conf.d.inc/ocsp.conf.quictls.inc /usr/local/nginx/conf.docker/conf.d.inc/ocsp.conf.inc
+EOT
+
+ENV LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
+ENV PATH=/usr/local/nginx/sbin:/usr/local/curl/bin:/usr/local/ssl/bin:$PATH
+
+EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
+
+VOLUME ["/usr/local/nginx/conf", "/usr/local/nginx/html", "/usr/local/nginx/lua", "/usr/local/nginx/logs", "/usr/local/nginx/cache"]
+
+STOPSIGNAL SIGQUIT
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["/usr/local/nginx/sbin/nginx", "-g", "daemon off;"]

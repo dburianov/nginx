@@ -47,7 +47,7 @@ RUN <<EOT
     echo "Compiling njs"
     set -e
     cd /usr/src/njs
-    ./configure 
+    ./configure
     make -j $(nproc)
     install -m755 build/njs /usr/local/bin/
 EOT
