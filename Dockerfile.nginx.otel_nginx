@@ -64,5 +64,5 @@ RUN <<EOT
         ..
     make -j $(nproc)
     make install
-    ls -la /usr/local/nginx/modules/
+    strip /usr/local/nginx/modules/*.so*
 EOT

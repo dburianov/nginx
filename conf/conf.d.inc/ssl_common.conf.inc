@@ -31,7 +31,7 @@ more_set_headers -t 'text/html' 'x-xss-protection: 1; mode=block';
 # add_header Content-Security-Policy "object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; frame-ancestors 'self';";
 ## The safest CSP, only block your website to be inside an inframe
 # add_header Content-Security-Policy "frame-ancestors 'self';";
-more_set_headers "Content-Security-Policy: default-src 'self';";
+# more_set_headers "Content-Security-Policy: default-src 'self';";
 
 more_set_headers "Strict-Transport-Security: max-age=63072000; includeSubDomains; preload";
 

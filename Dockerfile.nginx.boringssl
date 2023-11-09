@@ -91,7 +91,7 @@ RUN <<EOT
         --add-module=/usr/src/nginx-http-auth-digest \
         --add-module=/usr/src/ngx_http_geoip2_module \
         --add-module=/usr/src/redis2-nginx-module \
-        --with-cc-opt="-I/usr/src/boringssl/include" \
+        --with-cc-opt="-I/usr/src/boringssl/include -O3 -mpopcnt" \
         --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
         --build=quic-boringssl
     make -j $(nproc)

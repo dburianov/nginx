@@ -14,8 +14,14 @@ ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local
 RUN <<EOT
     mkdir -p /usr/local/nginx/lib/
     ldd /usr/local/nginx/sbin/nginx |  cut -d ' ' -f 3 | grep '/' | xargs -i cp {} /usr/local/nginx/lib/
-    cp /usr/lib/x86_64-linux-gnu/libcares*.so* /usr/lib/x86_64-linux-gnu/libre2*.so* /usr/local/nginx/lib/
+    cp -f \
+        /usr/lib/*-linux-gnu/libcares*.so* \
+        /usr/lib/*-linux-gnu/libre2*.so* \
+        /usr/local/nginx/lib/
     strip \
-        /usr/local/nginx/lib/*.so*
+        /usr/local/nginx/lib/*.so* \
+        /usr/local/lib/*.so* \
+        /usr/local/nginx/sbin/* \
+        /usr/local/bin/*
     rm -rf /usr/local/go /usr/local/modsecurity/lib /usr/local/modsecurity/include /usr/local/nginx/conf/*.default
 EOT

@@ -1,6 +1,5 @@
 FROM nginx_quictls_build AS nginx_quictls_build_nginx-otel
 LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
-ARG TARGETARCH
 ENV DEBIAN_FRONTEND noninteractive
 ENV GRPC_VERSION=v1.49.2 \
     OTEL_CPP_VERSION=v1.8.1 \
@@ -11,16 +10,13 @@ ENV GRPC_VERSION=v1.49.2 \
 RUN <<EOT
     echo "Compiling Opentelemetry for Nginx (https://github.com/nginxinc/nginx-otel)"
     set -e
-    cd /usr/src/
-    git clone https://github.com/nginxinc/nginx-otel.git
-    cd nginx-otel
-    mkdir build
-    cd build
+    mkdir /usr/src/nginx-otel/build
+    cd /usr/src/nginx-otel/build
     cmake \
         -DNGX_OTEL_NGINX_BUILD_DIR=/usr/src/nginx/objs \
         ..
     make -j $(nproc)
     mkdir -p /usr/local/nginx/modules/
     mv /usr/src/nginx-otel/build/ngx_otel_module.so /usr/local/nginx/modules/ngx_otel_module.so
-    ls -la /usr/local/nginx/modules/
+    strip /usr/local/nginx/modules/*.so*
 EOT

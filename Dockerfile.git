@@ -38,6 +38,7 @@ RUN <<EOT
     git clone --shallow-submodules --depth 1 --recurse-submodules -b ${OTEL_CPP_VERSION} \
       https://github.com/open-telemetry/opentelemetry-cpp.git /usr/src/opentelemetry-cpp
     git clone https://github.com/open-telemetry/opentelemetry-cpp-contrib.git /usr/src/opentelemetry-cpp-contrib
+    git clone https://github.com/nginxinc/nginx-otel.git /usr/src/nginx-otel
     git clone https://github.com/FRiCKLE/ngx_cache_purge.git /usr/src/ngx_cache_purge
     git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git /usr/src/ngx_http_substitutions_filter_module
     git clone https://github.com/samizdatco/nginx-http-auth-digest.git /usr/src/nginx-http-auth-digest
