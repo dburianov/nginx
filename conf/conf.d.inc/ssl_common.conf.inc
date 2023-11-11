@@ -22,18 +22,5 @@ ssl_stapling_verify on;
 
 
 
-more_set_headers "X-Content-Type-Options: nosniff";
-more_set_headers -t 'text/html' 'x-frame-options: SAMEORIGIN' always;
-more_set_headers -t 'text/html' 'x-xss-protection: 1; mode=block';
-
-## Content-Security-Policy (CSP): Yes
-## No 'script-src' directive, you need to test it yourself
-# add_header Content-Security-Policy "object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; frame-ancestors 'self';";
-## The safest CSP, only block your website to be inside an inframe
-# add_header Content-Security-Policy "frame-ancestors 'self';";
-# more_set_headers "Content-Security-Policy: default-src 'self';";
-
-more_set_headers "Strict-Transport-Security: max-age=63072000; includeSubDomains; preload";
-
-
+# 0-RTT QUIC connection resumption
 ssl_early_data on;
