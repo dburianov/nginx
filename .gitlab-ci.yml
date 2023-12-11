@@ -223,7 +223,6 @@ docker_nvidia_push:
           $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
           --progress plain
 
-
 cleanup_amd64:
     stage: failed
     extends: .cleanup_script
