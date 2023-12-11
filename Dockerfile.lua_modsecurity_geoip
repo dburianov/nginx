@@ -51,3 +51,13 @@ RUN <<EOT
     make -j $(nproc)
     install -m755 build/njs /usr/local/bin/
 EOT
+
+## libsrt https://github.com/Haivision/srt
+RUN <<EOT
+    echo "Compiling srt"
+    set -e
+    cd /usr/src/srt
+    cmake -DCMAKE_INSTALL_PREFIX=/usr/local .
+    make
+    make install
+EOT

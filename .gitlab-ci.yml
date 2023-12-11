@@ -173,6 +173,30 @@ docker_quictls_push:
       DOCKER_REPO_DST: "dburianov/nginx-aio"
     <<: *push_script
 
+docker_boringssl_mini_push:
+    stage: push
+    variables:
+      SSL_VENDOR: boringssl-mini
+      TAG_ONE: $ARM_TAG-$SSL_VENDOR
+      TAG_TWO: $AMD_TAG-$SSL_VENDOR
+      ARCH_ONE: $ARM_ARCH
+      ARCH_TWO: $AMD_ARCH
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+      DOCKER_REPO_DST: "dburianov/nginx-aio"
+    <<: *push_script
+
+docker_quictls_mini_push:
+    stage: push
+    variables:
+      SSL_VENDOR: quictls-mini
+      TAG_ONE: $ARM_TAG-$SSL_VENDOR
+      TAG_TWO: $AMD_TAG-$SSL_VENDOR
+      ARCH_ONE: $ARM_ARCH
+      ARCH_TWO: $AMD_ARCH
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+      DOCKER_REPO_DST: "dburianov/nginx-aio"
+    <<: *push_script
+
 docker_nvidia_push:
     stage: push
     variables:
