@@ -1,0 +1,92 @@
+ARG SSL
+FROM dburianov/ubuntu:latest AS ubuntu_core
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ENV DEBIAN_FRONTEND noninteractive
+ENV TZ=Europe/London
+RUN <<EOT
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+    echo $TZ > /etc/timezone
+EOT
+
+RUN <<EOT
+    apt-get -yqq update
+    apt-get install -y --no-install-recommends --no-install-suggests \
+        lua-socket lua-zlib
+    rm -rf /var/lib/apt/lists/* \
+           /usr/share/doc/* \
+           /usr/share/man/*
+    apt-get autoremove -y
+    apt-get clean -y
+EOT
+
+FROM dburianov/modsecurity_rules:latest AS modsecurity_rules
+FROM dburianov/geoip:latest AS geoip
+FROM dburianov/curl:latest AS curl
+FROM dburianov/openssl:latest AS openssl
+FROM nginx_${SSL}_post AS nginx-build
+FROM nginx_build_nginx-otel AS nginx-otel
+FROM nginx_build_otel-nginx AS otel-nginx
+#FROM ubuntu_core AS nginx-release
+FROM dburianov/ffmpeg:latest-nvidia AS ffmpeg-nvidia
+
+LABEL maintainer="Dmytro Burianov <dmytro@burianov.net>"
+ARG CACHEBUST=0
+
+RUN <<EOT
+    mkdir -p /usr/local/nginx/logs \
+             /usr/local/nginx/conf.docker/ssl.dh/ \
+             /usr/local/nginx/lua.docker \
+             /usr/local/nginx/geoip \
+             /usr/local/nginx/conf/ \
+             /tmp/modsecurity/tmp \
+             /tmp/modsecurity/data \
+             /tmp/modsecurity/upload \
+             /tmp/nginx
+    touch /usr/local/nginx/logs/access.log /usr/local/nginx/logs/error.log
+    ln -sf /dev/stdout /usr/local/nginx/logs/access.log
+    ln -sf /dev/stderr /usr/local/nginx/logs/error.log
+EOT
+
+COPY --from=nginx-build /usr/local /usr/local/
+COPY --from=modsecurity_rules /usr/local/modsecurity /usr/local/modsecurity
+COPY --from=nginx-build /usr/src/ModSecurity/unicode.mapping /usr/local/modsecurity/unicode.mapping
+COPY --from=nginx-build /usr/bin/envsubst /usr/bin/envsubst
+COPY --from=otel-nginx /usr/src/opentelemetry-cpp-contrib/instrumentation/nginx/test/conf/otel-nginx.toml /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml
+COPY --from=otel-nginx /usr/local/nginx/modules/otel_ngx_module.so /usr/local/nginx/modules/otel_ngx_module.so
+COPY --from=nginx-otel /usr/local/nginx/modules/ngx_otel_module.so /usr/local/nginx/modules/ngx_otel_module.so
+
+COPY --from=geoip /geoip /usr/local/nginx/geoip
+COPY --from=curl /usr/local/curl/ /usr/local/curl/
+COPY --from=curl /usr/local/bin/httpstat.sh /usr/local/bin/httpstat.sh
+COPY --from=openssl /usr/local/ssl/ /usr/local/ssl/
+
+ADD docker-entrypoint.sh /docker-entrypoint.sh
+ADD conf /usr/local/nginx/conf.docker
+ADD lua /usr/local/nginx/lua.docker
+ADD dhparams* /usr/local/nginx/conf.docker/ssl.dh/
+RUN <<EOT
+    echo "Configuring libs and copy default configs"
+    echo "/usr/local/nginx/lib/" > /etc/ld.so.conf.d/nginx.conf
+    #    echo "/usr/local/curl/lib" > /etc/ld.so.conf.d/curl.conf
+    echo "/usr/local/ssl/lib64" > /etc/ld.so.conf.d/openssl.conf
+    echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/openssl.conf
+    ldconfig -v
+    cp -rf /usr/local/nginx/conf.docker/* /usr/local/nginx/conf/
+    rm -rf /usr/bin/c_rehash /usr/bin/openssl /usr/local/ssl/share/*
+    chmod +x /docker-entrypoint.sh
+    echo 'alias curl="LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:/usr/local/curl/lib:$LD_LIBRARY_PATH curl"' | tee -a /root/.bashrc
+    cp /etc/ssl/openssl.cnf /usr/local/ssl/openssl.cnf
+    cp -f /usr/local/nginx/conf.docker/conf.d.inc/ocsp.conf.quictls.inc /usr/local/nginx/conf.docker/conf.d.inc/ocsp.conf.inc
+EOT
+
+ENV LD_LIBRARY_PATH=/usr/local/ssl/lib:/usr/local/ssl/lib64:$LD_LIBRARY_PATH
+ENV PATH=/usr/local/nginx/sbin:/usr/local/curl/bin:/usr/local/ssl/bin:$PATH
+
+EXPOSE 80/tcp 443/tcp 443/udp 1935/tcp
+
+VOLUME ["/usr/local/nginx/conf", "/usr/local/nginx/html", "/usr/local/nginx/lua", "/usr/local/nginx/logs", "/usr/local/nginx/cache"]
+
+STOPSIGNAL SIGQUIT
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["/usr/local/nginx/sbin/nginx", "-g", "daemon off;"]

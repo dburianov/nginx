@@ -6,6 +6,7 @@ ENV GRPC_VERSION=v1.49.2 \
     OTEL_CPP_VERSION=v1.8.1 \
     OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
     MODSECURITY_VERSION=v3/master \
+    LIBSRT_VERSION=1.5.3 \
     NGINX_VERSION=release-1.25.3
 
 RUN <<EOT
@@ -78,6 +79,7 @@ RUN <<EOT
         --add-module=/usr/src/nginx-module-stream-sts \
         --add-module=/usr/src/nginx-module-sts \
         --add-module=/usr/src/nginx-vod-module \
+        --add-module=/usr/src/nginx-srt-module \
         --add-module=/usr/src/njs/nginx \
         --add-module=/usr/src/ModSecurity-nginx \
         --add-module=/usr/src/headers-more-nginx-module \

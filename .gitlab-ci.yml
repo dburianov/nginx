@@ -173,6 +173,32 @@ docker_quictls_push:
       DOCKER_REPO_DST: "dburianov/nginx-aio"
     <<: *push_script
 
+docker_nvidia_push:
+    stage: push
+    variables:
+      SSL_VENDOR: quictls-nvidia
+      TAG_TWO: $AMD_TAG-$SSL_VENDOR
+      ARCH_TWO: $AMD_ARCH
+      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
+      DOCKER_REPO_DST: "dburianov/nginx-aio"
+    script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+        - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
+
+        - docker pull $DOCKER_REPO:$TAG_TWO-latest
+        - docker pull $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
+
+        - docker buildx imagetools create
+          -t $DOCKER_REPO_DST:$SSL_VENDOR-latest
+          -t $DOCKER_REPO:$SSL_VENDOR-latest
+          $DOCKER_REPO:$TAG_TWO-latest
+          --progress plain
+        - docker buildx imagetools create
+          -t $DOCKER_REPO_DST:$SSL_VENDOR-$BUILD_TAG
+          -t $DOCKER_REPO:$SSL_VENDOR-$BUILD_TAG
+          $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
+          --progress plain
+
 cleanup_amd64:
     stage: failed
     extends: .cleanup_script
