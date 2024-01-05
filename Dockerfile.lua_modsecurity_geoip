@@ -58,6 +58,6 @@ RUN <<EOT
     set -e
     cd /usr/src/srt
     cmake -DCMAKE_INSTALL_PREFIX=/usr/local .
-    make
+    make -j $(nproc)
     make install
 EOT

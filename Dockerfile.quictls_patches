@@ -18,6 +18,7 @@ RUN <<EOT
     curl -s -o /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch https://raw.githubusercontent.com/openresty/openresty/master/patches/nginx-1.25.1-log_escape_non_ascii.patch
 EOT
 
+ADD openssl.extensions.patch /usr/src/openssl.extensions.patch
 RUN <<EOT
     echo "Apply Nginx patches"
     set -e
@@ -30,4 +31,9 @@ RUN <<EOT
     patch -p1 < /usr/src/nginx/nginx-1.25.1-resolver_conf_parsing.patch
     patch -p1 < /usr/src/nginx/nginx-1.25.1-reuseport_close_unused_fds.patch
     patch -p1 < /usr/src/nginx/nginx-1.25.1-log_escape_non_ascii.patch
+    echo "Apply ja3 patches for nginx"
+    patch -p1 < /usr/src/nginx-ssl-ja3.git/patches/nginx.latest.patch
+    echo "Apply ja3 patches for openssl"
+    cd /usr/src/openssl/
+    patch -p1 < /usr/src/openssl.extensions.patch
 EOT
