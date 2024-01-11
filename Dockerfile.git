@@ -6,7 +6,6 @@ ENV GRPC_VERSION=v1.49.2 \
     OTEL_CPP_VERSION=v1.8.1 \
     OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
     MODSECURITY_VERSION=v3/master \
-    LIBSRT_VERSION=1.5.3 \
     NGINX_VERSION=release-1.25.3
 
 RUN <<EOT
@@ -26,8 +25,6 @@ RUN <<EOT
     git clone https://github.com/vozlt/nginx-module-stream-sts.git /usr/src/nginx-module-stream-sts
     git clone https://github.com/vozlt/nginx-module-sts.git /usr/src/nginx-module-sts
     git clone https://github.com/kaltura/nginx-vod-module.git /usr/src/nginx-vod-module
-    git clone https://github.com/kaltura/nginx-srt-module.git /usr/src/nginx-srt-module
-    git clone --depth 1 --branch v${LIBSRT_VERSION} https://github.com/Haivision/srt.git /usr/src/srt
     git clone https://github.com/arut/nginx-rtmp-module.git /usr/src/nginx-rtmp-module
     git clone https://github.com/arut/nginx-ts-module.git /usr/src/nginx-ts-module
     git clone https://github.com/yaoweibin/nginx_upstream_check_module /usr/src/nginx_upstream_check_module
@@ -52,4 +49,5 @@ RUN <<EOT
     git clone --recursive https://github.com/maxmind/libmaxminddb /usr/src/libmaxminddb
     hg clone -r ${NGINX_VERSION} https://hg.nginx.org/nginx /usr/src/nginx
     hg clone https://hg.nginx.org/njs /usr/src/njs
+    git clone https://github.com/fooinha/nginx-ssl-ja3.git /usr/src/nginx-ssl-ja3.git
 EOT
