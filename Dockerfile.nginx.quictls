@@ -93,7 +93,6 @@ RUN <<EOT
         --add-module=/usr/src/nginx-http-auth-digest \
         --add-module=/usr/src/ngx_http_geoip2_module \
         --add-module=/usr/src/redis2-nginx-module \
-        --add-module=/usr/src/nginx-ssl-ja3.git \
         --with-cc-opt="-I/usr/src/ssl/include -O3" \
         --with-ld-opt="-L/usr/src/ssl/lib" \
         --with-openssl=/usr/src/openssl \

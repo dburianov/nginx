@@ -52,5 +52,4 @@ RUN <<EOT
     git clone --recursive https://github.com/maxmind/libmaxminddb /usr/src/libmaxminddb
     hg clone -r ${NGINX_VERSION} https://hg.nginx.org/nginx /usr/src/nginx
     hg clone https://hg.nginx.org/njs /usr/src/njs
-    git clone https://github.com/fooinha/nginx-ssl-ja3.git /usr/src/nginx-ssl-ja3.git
 EOT
