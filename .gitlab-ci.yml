@@ -22,8 +22,7 @@ variables:
 
 include:
   - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.cleanup_script.yml"
-  - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.build_script.yml"
-  - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.build_script_v2.yml"
+  - .build_script_v2.yml
   - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.docker_nginx_test_script.yml"
   - template: Security/SAST.gitlab-ci.yml
 
@@ -205,6 +204,17 @@ docker_nvidia_push:
       ARCH_TWO: $AMD_ARCH
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
       DOCKER_REPO_DST: "dburianov/nginx-aio"
+    only:
+      refs:
+        - master
+        - main
+#        - merge_requests
+      variables:
+        - $CI_COMMIT_MESSAGE =~ /^Release .+/
+        - $CI_COMMIT_MESSAGE =~ /^Push images .+/
+        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
+        - $CI_PIPELINE_SOURCE == "schedule"
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY

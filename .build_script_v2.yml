@@ -1,0 +1,101 @@
+.build_script_v2:
+    image: docker:latest
+    except:
+      changes:
+        - "README.md"
+    only:
+      refs:
+        - master
+        - main
+      variables:
+        - $CI_COMMIT_MESSAGE =~ /^Release .+/
+        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
+        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
+        - $CI_PIPELINE_SOURCE == "schedule"
+    services:
+        - docker:dind
+    script:
+        - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+
+        - docker build
+          --tag nginx_ubuntu
+          --progress plain -f Dockerfile.ubuntu .
+        - docker build
+          --tag nginx_ubuntu_git
+          --progress plain -f Dockerfile.git .
+        - docker build
+          --tag nginx_ubuntu_pre_pack
+          --progress plain -f Dockerfile.lua_modsecurity_geoip .
+
+        - docker build
+          --tag nginx_quictls_lib
+          --progress plain -f Dockerfile.quictls_lib .
+        - docker build
+          --tag nginx_quictls_patches
+          --progress plain -f Dockerfile.quictls_patches .
+        - docker build
+          --tag nginx_quictls_build
+          --progress plain -f Dockerfile.nginx.quictls .
+
+        - docker build
+          --tag nginx_build_nginx-otel
+          --progress plain -f Dockerfile.nginx.nginx_otel .
+        - docker build
+          --tag nginx_build_otel-nginx
+          --progress plain -f Dockerfile.nginx.otel_nginx .
+
+        - docker build
+          --tag nginx_quictls_post
+          --progress plain --build-arg SSL=quictls -f Dockerfile.nginx.post .
+        - docker build
+          --tag nginx_quictls_cache:latest
+          --tag $DOCKER_REPO:$TAG_SSL-quictls-latest
+          --tag $DOCKER_REPO:$TAG_SSL-quictls-$BUILD_TAG
+          --progress plain --build-arg SSL=quictls -f Dockerfile.final .
+
+
+        - docker build
+          --tag nginx_boringssl_lib
+          --progress plain -f Dockerfile.boringssl_lib .
+        - docker build
+          --tag nginx_boringssl_patches
+          --progress plain -f Dockerfile.boringssl_patches .
+        - docker build
+          --tag nginx_boringssl_build
+          --progress plain -f Dockerfile.nginx.boringssl .
+
+        - docker build
+          --tag nginx_boringssl_post
+          --progress plain --build-arg SSL=boringssl -f Dockerfile.nginx.post .
+        - docker build
+          --tag nginx_boringssl_cache:latest
+          --tag $DOCKER_REPO:$TAG_SSL-boringssl-latest
+          --tag $DOCKER_REPO:$TAG_SSL-boringssl-$BUILD_TAG
+          --progress plain --build-arg SSL=boringssl -f Dockerfile.final .
+
+# Nvidia
+        - docker build
+          --tag $DOCKER_REPO:$TAG_SSL-quictls-nvidia-latest
+          --tag $DOCKER_REPO:$TAG_SSL-quictls-nvidia-$BUILD_TAG
+          --progress plain --build-arg SSL=quictls -f Dockerfile.final.nvidia .
+# Minimal image
+        - docker build
+          --tag $DOCKER_REPO:$TAG_SSL-quictls-mini-latest
+          --tag $DOCKER_REPO:$TAG_SSL-quictls-mini-$BUILD_TAG
+          --progress plain --build-arg SSL=quictls -f Dockerfile.final.mini .
+        - docker build
+          --tag $DOCKER_REPO:$TAG_SSL-boringssl-mini-latest
+          --tag $DOCKER_REPO:$TAG_SSL-boringssl-mini-$BUILD_TAG
+          --progress plain --build-arg SSL=boringssl -f Dockerfile.final.mini .
+
+        - docker push $DOCKER_REPO:$TAG_SSL-quictls-latest
+        - docker push $DOCKER_REPO:$TAG_SSL-quictls-$BUILD_TAG
+        - docker push $DOCKER_REPO:$TAG_SSL-boringssl-latest
+        - docker push $DOCKER_REPO:$TAG_SSL-boringssl-$BUILD_TAG
+        - docker push $DOCKER_REPO:$TAG_SSL-quictls-nvidia-latest
+        - docker push $DOCKER_REPO:$TAG_SSL-quictls-nvidia-$BUILD_TAG
+        - docker push $DOCKER_REPO:$TAG_SSL-quictls-mini-latest
+        - docker push $DOCKER_REPO:$TAG_SSL-quictls-mini-$BUILD_TAG
+        - docker push $DOCKER_REPO:$TAG_SSL-boringssl-mini-latest
+        - docker push $DOCKER_REPO:$TAG_SSL-boringssl-mini-$BUILD_TAG
