@@ -78,7 +78,6 @@ RUN <<EOT
         --add-module=/usr/src/nginx-module-stream-sts \
         --add-module=/usr/src/nginx-module-sts \
         --add-module=/usr/src/nginx-vod-module \
-        --add-module=/usr/src/nginx-srt-module \
         --add-module=/usr/src/njs/nginx \
         --add-module=/usr/src/ModSecurity-nginx \
         --add-module=/usr/src/headers-more-nginx-module \
