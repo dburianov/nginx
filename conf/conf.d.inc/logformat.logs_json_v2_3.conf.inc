@@ -9,7 +9,7 @@ log_format logs_json_v2_3 escape=json
     '"type":"nginx",'
     '"log_format":"logs_json_v2_3",'
     '"escape":"json",'
-    '"version":"2.2"'
+    '"version":"2.3"'
   '},'
   '"remote":{'
     '"remote_addr":"$remote_addr",'

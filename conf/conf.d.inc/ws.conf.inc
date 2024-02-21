@@ -22,7 +22,6 @@ proxy_set_header   Proxy             "";
 proxy_max_temp_file_size 0;
 
 #this is the maximum upload size
-client_max_body_size       10m;
 client_body_buffer_size    128k;
 
 proxy_connect_timeout      90;
