@@ -55,24 +55,7 @@
           --progress plain --build-arg SSL=quictls -f Dockerfile.final .
 
 
-        - docker build
-          --tag nginx_boringssl_lib
-          --progress plain -f Dockerfile.boringssl_lib .
-        - docker build
-          --tag nginx_boringssl_patches
-          --progress plain -f Dockerfile.boringssl_patches .
-        - docker build
-          --tag nginx_boringssl_build
-          --progress plain -f Dockerfile.nginx.boringssl .
 
-        - docker build
-          --tag nginx_boringssl_post
-          --progress plain --build-arg SSL=boringssl -f Dockerfile.nginx.post .
-        - docker build
-          --tag nginx_boringssl_cache:latest
-          --tag $DOCKER_REPO:$TAG_SSL-boringssl-latest
-          --tag $DOCKER_REPO:$TAG_SSL-boringssl-$BUILD_TAG
-          --progress plain --build-arg SSL=boringssl -f Dockerfile.final .
 
 # Nvidia
         - docker build
@@ -84,18 +67,10 @@
           --tag $DOCKER_REPO:$TAG_SSL-quictls-mini-latest
           --tag $DOCKER_REPO:$TAG_SSL-quictls-mini-$BUILD_TAG
           --progress plain --build-arg SSL=quictls -f Dockerfile.final.mini .
-        - docker build
-          --tag $DOCKER_REPO:$TAG_SSL-boringssl-mini-latest
-          --tag $DOCKER_REPO:$TAG_SSL-boringssl-mini-$BUILD_TAG
-          --progress plain --build-arg SSL=boringssl -f Dockerfile.final.mini .
 
         - docker push $DOCKER_REPO:$TAG_SSL-quictls-latest
         - docker push $DOCKER_REPO:$TAG_SSL-quictls-$BUILD_TAG
-        - docker push $DOCKER_REPO:$TAG_SSL-boringssl-latest
-        - docker push $DOCKER_REPO:$TAG_SSL-boringssl-$BUILD_TAG
         - docker push $DOCKER_REPO:$TAG_SSL-quictls-nvidia-latest
         - docker push $DOCKER_REPO:$TAG_SSL-quictls-nvidia-$BUILD_TAG
         - docker push $DOCKER_REPO:$TAG_SSL-quictls-mini-latest
         - docker push $DOCKER_REPO:$TAG_SSL-quictls-mini-$BUILD_TAG
-        - docker push $DOCKER_REPO:$TAG_SSL-boringssl-mini-latest
-        - docker push $DOCKER_REPO:$TAG_SSL-boringssl-mini-$BUILD_TAG

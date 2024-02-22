@@ -68,25 +68,7 @@ docker_arm64_build:
     extends: .build_script_v2
 
 # run tests
-docker_nginx_boringssl_test:
-    stage: docker_nginx_test
-    variables:
-      TAG_SSL: "$AMD_TAG-boringssl"
-      ARCH: $AMD_ARCH
-      DOCKERFILE_SUFIX: "test"
-      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
-    extends: .docker_nginx_test_script
 
-docker_nginx_boringssl_test_arm64v8:
-    stage: docker_nginx_test
-    tags:
-    - arm64
-    variables:
-      TAG_SSL: "$ARM_TAG-boringssl"
-      ARCH: $ARM_ARCH
-      DOCKERFILE_SUFIX: "test"
-      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
-    extends: .docker_nginx_test_script
 
 docker_nginx_quictls_test:
     stage: docker_nginx_test
@@ -148,17 +130,6 @@ docker_nginx_quictls_test_arm64v8:
           $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
           --progress plain
 
-docker_boringssl_push:
-    stage: push
-    variables:
-      SSL_VENDOR: boringssl
-      TAG_ONE: $ARM_TAG-$SSL_VENDOR
-      TAG_TWO: $AMD_TAG-$SSL_VENDOR
-      ARCH_ONE: $ARM_ARCH
-      ARCH_TWO: $AMD_ARCH
-      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
-      DOCKER_REPO_DST: "dburianov/nginx-aio"
-    <<: *push_script
 
 docker_quictls_push:
     stage: push
@@ -172,17 +143,6 @@ docker_quictls_push:
       DOCKER_REPO_DST: "dburianov/nginx-aio"
     <<: *push_script
 
-docker_boringssl_mini_push:
-    stage: push
-    variables:
-      SSL_VENDOR: boringssl-mini
-      TAG_ONE: $ARM_TAG-$SSL_VENDOR
-      TAG_TWO: $AMD_TAG-$SSL_VENDOR
-      ARCH_ONE: $ARM_ARCH
-      ARCH_TWO: $AMD_ARCH
-      DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
-      DOCKER_REPO_DST: "dburianov/nginx-aio"
-    <<: *push_script
 
 docker_quictls_mini_push:
     stage: push
