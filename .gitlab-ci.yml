@@ -16,7 +16,7 @@ variables:
     AMD_ARCH: "linux/amd64"
     ARM_ARCH: "linux/arm64/v8"
     CI: 'false'
-    DOCKER_TLS_CERTDIR: ""
+    DOCKER_TLS_CERTDIR: "/certs"
 
 include:
   - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.cleanup_script.yml"
