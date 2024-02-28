@@ -1,5 +1,4 @@
 .build_script_v2:
-    image: docker:latest
     except:
       changes:
         - "README.md"

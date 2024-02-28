@@ -1,6 +1,3 @@
-image: docker
-services:
-  - "docker:dind"
 stages:
 - test
 - prerape
@@ -91,7 +88,6 @@ docker_nginx_quictls_test_arm64v8:
     extends: .docker_nginx_test_script
 
 .push_script: &push_script
-    image: docker:latest
     except:
       changes:
         - "README.md"
