@@ -45,7 +45,6 @@ setvars-job:
 #    extends: .build_script
 
 # new nginx build
-# renun 2 time
 # rerun
 docker_build:
     stage: docker_build
