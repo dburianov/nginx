@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 touch /tmp/nginx/entrypoint.test 2>/dev/null || { echo >&2 "$ME: error: can not modify /tmp/nginx/entrypoint.test (read-only file system?)"; exit 0; }
 
 
