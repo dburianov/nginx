@@ -1,4 +1,6 @@
 image: docker
+services:
+  - "docker:dind"
 stages:
 - test
 - prerape
