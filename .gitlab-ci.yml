@@ -189,17 +189,7 @@ docker_nvidia_push:
           $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
           --progress plain
 
-cleanup_amd64:
-    stage: failed
-    extends: .cleanup_script
-    when: always
 
-cleanup_arm64_v8:
-    tags:
-    - arm64
-    stage: failed
-    extends: .cleanup_script
-    when: always
 #    needs:
 #    - job: B
 #    - job: C

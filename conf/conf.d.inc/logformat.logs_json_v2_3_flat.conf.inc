@@ -1,4 +1,4 @@
-log_format logs_json_v2_3 escape=json
+log_format logs_json_v2_3_flat escape=json
 '{'
   '"time_local":"$time_local",'
   '"time_iso8601":"$time_iso8601",'
