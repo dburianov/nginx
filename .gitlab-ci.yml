@@ -91,9 +91,6 @@ docker_nginx_quictls_test_arm64v8:
     extends: .docker_nginx_test_script
 
 
-
-
-
 docker_quictls_push:
     stage: push
     variables:
@@ -146,9 +143,3 @@ docker_nvidia_push:
           -t $DOCKER_REPO:$SSL_VENDOR-$BUILD_TAG
           $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
           --progress plain
-
-
-#    needs:
-#    - job: B
-#    - job: C
-

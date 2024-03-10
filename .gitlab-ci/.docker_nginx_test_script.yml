@@ -1,4 +1,3 @@
-#.docker_nginx_test_script: &docker_nginx_test_script
 .docker_nginx_test_script:
     image: docker:latest
     stage: docker_nginx_test
