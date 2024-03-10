@@ -1,7 +1,4 @@
 .build_script_v2:
-    except:
-      changes:
-        - "README.md"
     rules:
       - if: ($CI_PIPELINE_SOURCE == 'web' && ($CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH))
     services:

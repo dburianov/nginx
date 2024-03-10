@@ -2,9 +2,6 @@
 .docker_nginx_test_script:
     image: docker:latest
     stage: docker_nginx_test
-    except:
-      changes:
-        - "README.md"
     rules:
       - if: ($CI_PIPELINE_SOURCE == 'web' && ($CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH))
     services:
