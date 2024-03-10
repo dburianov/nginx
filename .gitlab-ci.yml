@@ -104,7 +104,7 @@ docker_quictls_push:
       ARCH_TWO: $AMD_ARCH
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
       DOCKER_REPO_DST: "dburianov/nginx-aio"
-    extends: *push_script
+    extends: .push_script
 
 
 docker_quictls_mini_push:
@@ -117,7 +117,7 @@ docker_quictls_mini_push:
       ARCH_TWO: $AMD_ARCH
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
       DOCKER_REPO_DST: "dburianov/nginx-aio"
-    extends: *push_script
+    extends: .push_script
 
 docker_nvidia_push:
     stage: push
