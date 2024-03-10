@@ -21,10 +21,10 @@ variables:
     DOCKER_TLS_CERTDIR: "/certs"
 
 include:
-  - "https://gitlab.com/burianov/gitla-ci/-/raw/main/templates/.cleanup_script.yml"
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/SAST-IaC.gitlab-ci.yml
   - .gitlab-ci/.build_script_v2.yml
   - .gitlab-ci/.docker_nginx_test_script.yml
-  - template: Security/SAST.gitlab-ci.yml
 
 sast:
   stage: test
@@ -89,44 +89,8 @@ docker_nginx_quictls_test_arm64v8:
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
     extends: .docker_nginx_test_script
 
-.push_script: &push_script
-    except:
-      changes:
-        - "README.md"
-    only:
-      refs:
-        - master
-        - main
-#        - merge_requests
-      variables:
-        - $CI_COMMIT_MESSAGE =~ /^Release .+/
-        - $CI_COMMIT_MESSAGE =~ /^Push images .+/
-        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
-        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
-        - $CI_PIPELINE_SOURCE == "schedule"
-    services:
-        - docker:dind
-    script:
-        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
-        - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
 
-        - docker pull --platform $ARCH_ONE $DOCKER_REPO:$TAG_ONE-latest
-        - docker pull --platform $ARCH_ONE $DOCKER_REPO:$TAG_ONE-$BUILD_TAG
-        - docker pull --platform $ARCH_TWO $DOCKER_REPO:$TAG_TWO-latest
-        - docker pull --platform $ARCH_TWO $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
 
-        - docker buildx imagetools create
-          -t $DOCKER_REPO_DST:$SSL_VENDOR-latest
-          -t $DOCKER_REPO:$SSL_VENDOR-latest
-          $DOCKER_REPO:$TAG_ONE-latest
-          $DOCKER_REPO:$TAG_TWO-latest
-          --progress plain
-        - docker buildx imagetools create
-          -t $DOCKER_REPO_DST:$SSL_VENDOR-$BUILD_TAG
-          -t $DOCKER_REPO:$SSL_VENDOR-$BUILD_TAG
-          $DOCKER_REPO:$TAG_ONE-$BUILD_TAG
-          $DOCKER_REPO:$TAG_TWO-$BUILD_TAG
-          --progress plain
 
 
 docker_quictls_push:
@@ -162,17 +126,6 @@ docker_nvidia_push:
       ARCH_TWO: $AMD_ARCH
       DOCKER_REPO: "$CI_MY_REGISTRY/burianov/nginx-aio"
       DOCKER_REPO_DST: "dburianov/nginx-aio"
-    only:
-      refs:
-        - master
-        - main
-#        - merge_requests
-      variables:
-        - $CI_COMMIT_MESSAGE =~ /^Release .+/
-        - $CI_COMMIT_MESSAGE =~ /^Push images .+/
-        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
-        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
-        - $CI_PIPELINE_SOURCE == "schedule"
     script:
         - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
         - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY

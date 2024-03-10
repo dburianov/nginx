@@ -5,17 +5,8 @@
     except:
       changes:
         - "README.md"
-    only:
-      refs:
-        - master
-        - main
-        - work
-      variables:
-        - $CI_PIPELINE_SOURCE == "schedule"
-        - $CI_COMMIT_MESSAGE =~ /^Release .+/
-        - "$CI_COMMIT_MESSAGE =~ /^test: .+/"
-        - "$CI_COMMIT_MESSAGE =~ /^(feat|fix): .+/"
-        - "$CI_COMMIT_MESSAGE =~ /^Merge branch .* into .main./"
+    rules:
+      - if: ($CI_PIPELINE_SOURCE == 'web' && ($CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH))
     services:
         - docker:dind
     script:
