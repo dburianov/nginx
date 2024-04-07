@@ -1,0 +1,131 @@
+#user nginx;
+load_module /usr/local/nginx/modules/otel_ngx_module.so;
+#load_module /usr/local/nginx/modules/ngx_otel_module.so;
+include /tmp/nginx/conf.d.inc/worker_processes.conf.inc;
+# worker_rlimit_nofile = worker_connections*2
+# DefaultLimitNOFILE=100000
+# to
+# /etc/systemd/system.conf
+worker_rlimit_nofile 8192;
+error_log /dev/stderr;
+events {
+  worker_connections  4096;
+  multi_accept on;
+  use epoll;
+}
+http {
+  opentelemetry_config /usr/local/nginx/conf.docker/conf.d.inc/otel-nginx.toml;
+  opentelemetry_operation_name otel_test;
+  server_names_hash_max_size 2048;
+  server_names_hash_bucket_size 128;
+  variables_hash_max_size 2048;
+  proxy_headers_hash_max_size 4096;
+  proxy_headers_hash_bucket_size 256;
+  client_max_body_size 4096m;
+
+  tcp_nopush on;
+  tcp_nodelay on;
+  reset_timedout_connection on;
+  server_tokens off;
+
+  more_clear_headers Server;
+
+  vhost_traffic_status_zone;
+  vhost_traffic_status_zone shared:vhost_traffic_status:128m;
+  vhost_traffic_status_filter_by_host on;
+  vhost_traffic_status_filter_by_set_key $geoip_country_code country::*;
+  #stream_server_traffic_status_zone;
+
+  include /usr/local/nginx/conf.docker/conf.d.inc/resolver.conf.inc;
+  include /usr/local/nginx/conf.docker/conf.d.inc/map.conf.inc;
+  include /usr/local/nginx/conf.docker/conf.d.inc/logformat.*.conf.inc;
+  include /usr/local/nginx/conf.docker/conf.d.inc/compression.conf.inc;
+  include /usr/local/nginx/conf/conf.d.inc/geo.conf.inc;
+  include /usr/local/nginx/conf.docker/mime.types;
+  #access_log  /var/log/nginx/access.log main;
+  access_log  /dev/stdout logs_json_v2_3;
+  #  otel_exporter {
+  #      endpoint 10.239.196.12:4317;
+  #  }
+  #          otel_trace         on;
+  #          otel_trace_context propagate;
+  #          	otel_service_name p510:nginx;
+  server {
+    listen 80 default_server;
+    listen 443 quic reuseport;
+    listen 443 ssl;
+    http2 on;
+    http3 on;
+    ssl_certificate     /tmp/nginx/conf.d.inc/ssl/self-signed.crt;
+    ssl_certificate_key /tmp/nginx/conf.d.inc/ssl/self-signed.key;
+    include /usr/local/nginx/conf.docker/conf.d.inc/ocsp.conf.inc;
+
+    server_name _;
+    include /usr/local/nginx/conf.docker/conf.d.inc/ssl_common.conf.inc;
+
+    more_set_headers 'Alt-Svc: h3=":443"; ma=86400';
+
+    #set $csp_h 'asd asdfds';curl -kv https://127.0.0.1/healthcheckendpointjson   -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"   -H "Host: www.nginx.local"   --http3 --tlsv1.3
+
+    modsecurity on;
+    modsecurity_rules_file /usr/local/modsecurity/main.conf;
+    modsecurity_transaction_id "$http_host-$request_id";
+
+    opentelemetry_attribute "test.attrib.global" "global";
+    opentelemetry_attribute "test.attrib.custom" "global-custom";
+    opentelemetry_propagate;
+    opentelemetry_capture_headers on;
+
+    location / {
+      add_header Content-Type text/plain;
+      return 200;
+    #    root   html;
+    #    index  index.html index.htm;
+    }
+    location ~ /(healthcheckendpoint|healthz) {
+      allow 127.0.0.1;
+      deny all;
+      access_log off;
+      more_set_headers "Content-Type: text/plain";
+      return 200 "OK";
+    }
+
+    location = /healthcheckendpointjson {
+      opentelemetry_operation_name healthcheckendpointjson;
+      add_header Trace-Id "$opentelemetry_trace_id";
+      add_header Span-Id "$opentelemetry_span_id";
+      #	otel_span_name healthcheckendpointjson;
+      allow 127.0.0.1;
+      deny all;
+#      access_log off;
+      more_set_headers "Content-Type: application/json";
+      return 200 '{"status":"UP"}\n';
+    }
+
+    location /status {
+      opentelemetry_operation_name status;
+      add_header Trace-Id "$opentelemetry_trace_id";
+      add_header Span-Id "$opentelemetry_span_id";
+      allow 127.0.0.1;
+      deny all;
+      vhost_traffic_status_display;
+      vhost_traffic_status_display_format html;
+    }
+  }
+#   server {
+##     listen       443  default_server;
+#     listen 443 quic reuseport;
+#     listen 443 ssl;
+#     http2 on;
+#     http3 on;
+#     ssl_certificate     /usr/local/nginx/conf/ssl/server_name/fullchain.pem;
+#     ssl_certificate_key /usr/local/nginx/conf/ssl/server_name/privkey.pem;
+# 
+#     server_name _;
+#     include /usr/local/nginx/conf.docker/conf.d.inc/ssl_common.conf.inc;
+# 
+#     location / {
+#       add_header Alt-Svc 'h3=":443"; ma=86400';
+#     }
+#   }
+}
