@@ -57,6 +57,10 @@ masscan
 
 morfeus
 
+# The Mysterious Mozlila User Agent bot
+# https://trunc.org/learning/the-mozlila-user-agent-bot
+Mozlila
+
 # Nessus
 # http://www.tenable.com/products/nessus-vulnerability-scanner
 nessus
@@ -85,6 +89,9 @@ sqlmap
 
 # https://www.cyber.nj.gov/threat-profiles/trojan-variants/sysscan
 sysscan
+
+# https://github.com/google/tsunami-security-scanner
+TsunamiSecurityScanner
 
 w3af.org
 

@@ -6,7 +6,8 @@ ENV GRPC_VERSION=v1.49.2 \
     OTEL_CPP_VERSION=v1.8.1 \
     OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
     MODSECURITY_VERSION=v3/master \
-    NGINX_VERSION=release-1.25.4
+    NGINX_VERSION=release-1.26.1 \
+    JA4_VERSION=v1.0.0-beta
 
 RUN <<EOT
     echo "git clone"
@@ -50,4 +51,5 @@ RUN <<EOT
     hg clone -r ${NGINX_VERSION} https://hg.nginx.org/nginx /usr/src/nginx
     hg clone https://hg.nginx.org/njs /usr/src/njs
     git clone https://github.com/fooinha/nginx-ssl-ja3.git /usr/src/nginx-ssl-ja3.git
+    git clone -b ${JA4_VERSION} https://github.com/FoxIO-LLC/ja4-nginx-module.git /usr/src/ja4-nginx-module
 EOT
