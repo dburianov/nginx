@@ -6,7 +6,7 @@ ENV GRPC_VERSION=v1.49.2 \
     OTEL_CPP_VERSION=v1.8.1 \
     OTEL_CONTRIB_VERSION=37e4466d882cbddff6f607a20fe327060de76166 \
     MODSECURITY_VERSION=v3/master \
-    NGINX_VERSION=release-1.26.1
+    NGINX_VERSION=release-1.27.0
 
 RUN <<EOT
     echo "Compiling openssl"
