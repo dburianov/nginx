@@ -46,7 +46,7 @@ docker_modsecurity_build:
      ARCH: "linux/amd64,linux/arm/v7,linux/arm64/v8,linux/arm/v8"
      DOCKERFILE_SUFIX: modsecutity_rules
      DOCKER_REPO: "dburianov/modsecurity_rules"
-   extends: build_script_v2
+   extends: .build_script_v2
 
 # new nginx build
 # rerun
