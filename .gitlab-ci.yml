@@ -40,13 +40,26 @@ setvars-job:
       dotenv: build.env
 
 docker_modsecurity_build:
-   stage: docker_modsecurity
-   variables:
-     TAG_SSL: "modsecutity_rules"
-     ARCH: "linux/amd64,linux/arm/v7,linux/arm64/v8,linux/arm/v8"
-     DOCKERFILE_SUFIX: modsecutity_rules
-     DOCKER_REPO: "dburianov/modsecurity_rules"
-   extends: .build_script_v2
+  rules:
+      - if: ($CI_PIPELINE_SOURCE == 'web' && ($CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH))
+  services:
+    - docker:dind
+  script:
+    - docker login -u $CI_MY_REGISTRY_USER -p $CI_MY_REGISTRY_PASSWORD $CI_MY_REGISTRY
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+
+
+    - docker buildx create --use
+    - docker buildx build
+      --platform linux/amd64,linux/arm/v7,linux/arm64/v8,linux/arm/v8
+      --tag dburianov/modsecurity_rules:latest
+      --tag dburianov/modsecurity_rules:$BUILD_TAG
+      --tag $CI_MY_REGISTRY/modsecurity_rules:latest
+      --tag $CI_MY_REGISTRY/modsecurity_rules::$BUILD_TAG
+      --push
+      --progress plain
+      -f Dockerfile.modsecutity_rules
+      .
 
 # new nginx build
 # rerun
