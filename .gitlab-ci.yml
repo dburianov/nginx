@@ -40,6 +40,7 @@ setvars-job:
       dotenv: build.env
 
 docker_modsecurity_build:
+  stage: docker_modsecurity
   rules:
       - if: ($CI_PIPELINE_SOURCE == 'web' && ($CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH))
   services:
