@@ -56,7 +56,7 @@ docker_modsecurity_build:
       --tag dburianov/modsecurity_rules:latest
       --tag dburianov/modsecurity_rules:$BUILD_TAG
       --tag $CI_MY_REGISTRY/modsecurity_rules:latest
-      --tag $CI_MY_REGISTRY/modsecurity_rules::$BUILD_TAG
+      --tag $CI_MY_REGISTRY/modsecurity_rules:$BUILD_TAG
       --push
       --progress plain
       -f Dockerfile.modsecutity_rules
