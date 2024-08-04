@@ -20,7 +20,7 @@ RUN <<EOT
     apt install -y --no-install-recommends --no-install-suggests \
         git unzip libxml2-dev \
         libbz2-dev libmcrypt-dev libmhash2 \
-        libmhash-dev libpcre3 libpcre3-dev libpcre++-dev make build-essential \
+        libmhash-dev libpcre3 libpcre3-dev make build-essential \
         libxslt-dev libxslt1-dev libgeoip-dev \
         libpam-dev libgoogle-perftools-dev lua5.1 liblua5.1-0 \
         liblua5.1-0-dev checkinstall wget \
